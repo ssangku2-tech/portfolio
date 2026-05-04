@@ -28,44 +28,47 @@ body{font-family:'Noto Sans KR',sans-serif;background:#0B0F19;color:#EDF0FF;min-
 .tab.active{color:#4D9FFF;border-bottom-color:#4D9FFF}
 
 /* Summary card */
-.summary{margin:16px 16px 0;background:#141929;border-radius:16px;padding:20px;border:1px solid #1E2540}
-.summary-label{font-size:12px;color:#5A6380;margin-bottom:4px}
-.summary-total{font-size:26px;font-weight:700;color:#EDF0FF;margin-bottom:12px}
-.summary-row{display:flex;gap:12px}
-.summary-stat{flex:1;background:#0B0F19;border-radius:10px;padding:10px 12px}
-.summary-stat-label{font-size:11px;color:#5A6380;margin-bottom:3px}
-.summary-stat-value{font-size:14px;font-weight:700}
+.summary{margin:8px 10px 0;background:#141929;border-radius:12px;padding:12px 14px;border:1px solid #1E2540}
+.summary-label{font-size:11px;color:#5A6380;margin-bottom:2px}
+.summary-total{font-size:22px;font-weight:700;color:#EDF0FF;margin-bottom:8px}
+.summary-row{display:flex;gap:6px}
+.summary-stat{flex:1;background:#0B0F19;border-radius:8px;padding:7px 8px}
+.summary-stat-label{font-size:10px;color:#5A6380;margin-bottom:2px}
+.summary-stat-value{font-size:13px;font-weight:700}
 .pos{color:#00D98B}
 .neg{color:#FF4D6A}
 .neu{color:#8A93B8}
+/* 강조 색상 */
+.qty-val{color:#FFD166;font-weight:700}   /* 수량 - 노란색 */
+.avg-val{color:#74C2FF;font-weight:700}   /* 단가 - 하늘색 */
 
 /* Stock list */
-.list-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px 8px}
-.list-title{font-size:13px;color:#5A6380}
-.stock-list{padding:0 16px;padding-bottom:100px}
-.stock-card{background:#141929;border-radius:12px;padding:14px 16px;margin-bottom:10px;border:1px solid #1E2540;cursor:pointer;user-select:none}
+.list-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px 4px}
+.list-title{font-size:11px;color:#5A6380}
+.stock-list{padding:0 8px;padding-bottom:80px}
+.stock-card{background:#141929;border-radius:8px;padding:8px 10px;margin-bottom:5px;border:1px solid #1E2540;cursor:pointer;user-select:none}
 .stock-card:active{background:#1a2035}
-.stock-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
-.stock-name{font-size:15px;font-weight:700;color:#EDF0FF}
-.stock-code{font-size:11px;color:#5A6380;margin-top:2px}
+.stock-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px}
+.stock-name{font-size:14px;font-weight:700;color:#EDF0FF}
+.stock-code{font-size:10px;color:#5A6380;margin-top:1px}
 .stock-price{text-align:right}
-.stock-current{font-size:15px;font-weight:700;color:#EDF0FF}
-.stock-change{font-size:11px;margin-top:2px}
-.stock-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid #1E2540}
-.stock-meta{font-size:12px;color:#5A6380}
+.stock-current{font-size:14px;font-weight:700;color:#EDF0FF}
+.stock-change{font-size:10px;margin-top:1px}
+.stock-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:5px;border-top:1px solid #1E2540}
+.stock-meta{font-size:11px;color:#5A6380;line-height:1.5}
 .stock-pnl{text-align:right}
-.stock-pnl-amt{font-size:13px;font-weight:700}
-.stock-pnl-pct{font-size:11px;margin-top:1px}
-.loading-price{color:#5A6380;font-size:13px}
-.error-price{color:#FF4D6A;font-size:11px}
+.stock-pnl-amt{font-size:12px;font-weight:700}
+.stock-pnl-pct{font-size:10px;margin-top:1px}
+.loading-price{color:#5A6380;font-size:12px}
+.error-price{color:#FF4D6A;font-size:10px}
 
 /* Watchlist */
-.watch-card{background:#141929;border-radius:12px;padding:14px 16px;margin-bottom:10px;border:1px solid #1E2540;display:flex;justify-content:space-between;align-items:center}
-.watch-info .watch-name{font-size:15px;font-weight:700;color:#EDF0FF}
-.watch-info .watch-code{font-size:11px;color:#5A6380;margin-top:2px}
+.watch-card{background:#141929;border-radius:8px;padding:8px 10px;margin-bottom:5px;border:1px solid #1E2540;display:flex;justify-content:space-between;align-items:center}
+.watch-info .watch-name{font-size:14px;font-weight:700;color:#EDF0FF}
+.watch-info .watch-code{font-size:10px;color:#5A6380;margin-top:1px}
 .watch-price-block{text-align:right}
-.watch-price{font-size:16px;font-weight:700;color:#EDF0FF}
-.watch-change{font-size:11px;margin-top:2px}
+.watch-price{font-size:14px;font-weight:700;color:#EDF0FF}
+.watch-change{font-size:10px;margin-top:1px}
 
 /* Empty state */
 .empty{text-align:center;padding:60px 20px;color:#5A6380}
@@ -107,7 +110,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:#0B0F19;color:#EDF0FF;min-
 
 <div class="header">
   <div class="header-top">
-    <span class="app-title">📊 내 포트폴리오</span>
+    <span class="app-title">📊 내 주식 현황</span>
     <button class="refresh-btn" onclick="refreshPrices()">
       <span id="refresh-icon">↻</span> 시세 갱신
     </button>
@@ -115,8 +118,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:#0B0F19;color:#EDF0FF;min-
   <div class="tabs">
     <div class="tab active" onclick="switchTab('mirae1')">미래에셋1</div>
     <div class="tab" onclick="switchTab('mirae2')">미래에셋2</div>
+    <div class="tab" onclick="switchTab('mirae3')">미래에셋3</div>
     <div class="tab" onclick="switchTab('samsung')">삼성증권</div>
-    <div class="tab" onclick="switchTab('watch')">관심종목</div>
   </div>
 </div>
 
@@ -157,6 +160,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:#0B0F19;color:#EDF0FF;min-
       <select id="f-account">
         <option value="mirae1">미래에셋증권 1</option>
         <option value="mirae2">미래에셋증권 2</option>
+        <option value="mirae3">미래에셋증권 3</option>
         <option value="samsung">삼성증권</option>
       </select>
     </div>
@@ -201,6 +205,7 @@ function load() {
     accounts: {
       mirae1: { name: '미래에셋증권 1', stocks: [] },
       mirae2: { name: '미래에셋증권 2', stocks: [] },
+      mirae3: { name: '미래에셋증권 3', stocks: [] },
       samsung: { name: '삼성증권', stocks: [] }
     },
     watchlist: []
@@ -212,23 +217,32 @@ function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 
 // ── Price Fetch ────────────────────────────────────────────────
+const PROXIES = [
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://thingproxy.freeboard.io/fetch/${url}`,
+];
+
 async function fetchPrice(symbol) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
-  const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-  try {
-    const r = await fetch(proxy);
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const d = await r.json();
-    const meta = d?.chart?.result?.[0]?.meta;
-    if (!meta) throw new Error('No data');
-    return {
-      price: meta.regularMarketPrice,
-      prev: meta.previousClose || meta.chartPreviousClose,
-      currency: meta.currency
-    };
-  } catch(e) {
-    throw e;
+  let lastErr;
+  for (const proxyFn of PROXIES) {
+    try {
+      const r = await fetch(proxyFn(url), { signal: AbortSignal.timeout(8000) });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      const meta = d?.chart?.result?.[0]?.meta;
+      if (!meta) throw new Error('No data');
+      return {
+        price: meta.regularMarketPrice,
+        prev: meta.previousClose || meta.chartPreviousClose,
+        currency: meta.currency
+      };
+    } catch(e) {
+      lastErr = e;
+    }
   }
+  throw lastErr;
 }
 
 async function refreshPrices() {
@@ -238,12 +252,11 @@ async function refreshPrices() {
   icon.classList.add('spin');
 
   const allSymbols = new Map();
-  ['mirae1','mirae2','samsung'].forEach(acc => {
+  ['mirae1','mirae2','mirae3','samsung'].forEach(acc => {
     data.accounts[acc].stocks.forEach(s => {
       if (s.code) allSymbols.set(s.code, null);
     });
   });
-  data.watchlist.forEach(w => { if (w.code) allSymbols.set(w.code, null); });
 
   const promises = [...allSymbols.keys()].map(async code => {
     try {
@@ -255,7 +268,7 @@ async function refreshPrices() {
   });
   await Promise.all(promises);
 
-  ['mirae','samsung'].forEach(acc => {
+  ['mirae1','mirae2','mirae3','samsung'].forEach(acc => {
     data.accounts[acc].stocks.forEach(s => {
       const r = allSymbols.get(s.code);
       if (r && !r.error) {
@@ -266,16 +279,6 @@ async function refreshPrices() {
         s.priceError = true;
       }
     });
-  });
-  data.watchlist.forEach(w => {
-    const r = allSymbols.get(w.code);
-    if (r && !r.error) {
-      w.currentPrice = r.price;
-      w.prevClose = r.prev;
-      w.priceError = false;
-    } else if (r?.error) {
-      w.priceError = true;
-    }
   });
 
   save();
@@ -313,16 +316,8 @@ function render() {
   const title = document.getElementById('list-title');
   const fab = document.getElementById('fab-btn');
 
-  if (currentTab === 'watch') {
-    fab.style.display = 'flex';
-    title.textContent = '관심 종목';
-    sumArea.innerHTML = '';
-    renderWatchlist(list);
-    return;
-  }
-
   fab.style.display = 'flex';
-  const accNames = { mirae1:'미래에셋증권 1', mirae2:'미래에셋증권 2', samsung:'삼성증권' };
+  const accNames = { mirae1:'미래에셋증권 1', mirae2:'미래에셋증권 2', mirae3:'미래에셋증권 3', samsung:'삼성증권' };
   title.textContent = `${accNames[currentTab]} 보유 종목`;
 
   const stocks = data.accounts[currentTab].stocks;
@@ -343,7 +338,7 @@ function render() {
 
   // Both accounts for combined
   let allInvested = 0, allCurrent = 0;
-  ['mirae1','mirae2','samsung'].forEach(acc => {
+  ['mirae1','mirae2','mirae3','samsung'].forEach(acc => {
     data.accounts[acc].stocks.forEach(s => {
       allInvested += (s.avgPrice||0)*(s.qty||0);
       allCurrent += s.currentPrice ? s.currentPrice*(s.qty||0) : (s.avgPrice||0)*(s.qty||0);
@@ -404,7 +399,7 @@ function render() {
         <div class="stock-price">${priceHtml}</div>
       </div>
       <div class="stock-bottom">
-        <div class="stock-meta">${(s.qty||0).toLocaleString()}주 · 평균 ${fmtNum(s.avgPrice)}원</div>
+        <div class="stock-meta"><span class="qty-val">${(s.qty||0).toLocaleString()}주</span> · 평균 <span class="avg-val">${fmtNum(s.avgPrice)}원</span></div>
         <div class="stock-pnl">${pnlHtml}</div>
       </div>
     </div>`;
@@ -439,7 +434,7 @@ function renderWatchlist(list) {
 function switchTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.tab').forEach((el, i) => {
-    const tabs = ['mirae1','mirae2','samsung','watch'];
+    const tabs = ['mirae1','mirae2','mirae3','samsung'];
     el.classList.toggle('active', tabs[i] === tab);
   });
   render();
@@ -447,7 +442,6 @@ function switchTab(tab) {
 
 // ── Modal ─────────────────────────────────────────────────────
 function openAddModal() {
-  if (currentTab === 'watch') { openAddWatchModal(); return; }
   editingId = null;
   document.getElementById('modal-title').textContent = '종목 추가';
   document.getElementById('f-name').value = '';
@@ -462,7 +456,7 @@ function openAddModal() {
 }
 
 function openEditModal(id) {
-  const acc = ['mirae1','mirae2','samsung'].find(a => data.accounts[a].stocks.find(s => s.id === id));
+  const acc = ['mirae1','mirae2','mirae3','samsung'].find(a => data.accounts[a].stocks.find(s => s.id === id));
   if (!acc) return;
   const s = data.accounts[acc].stocks.find(s => s.id === id);
   editingId = id;
@@ -487,7 +481,7 @@ function saveStock() {
   if (!name || !code || isNaN(qty) || isNaN(avg)) { showToast('모든 항목을 입력해주세요'); return; }
 
   if (editingId) {
-    ['mirae1','mirae2','samsung'].forEach(a => {
+    ['mirae1','mirae2','mirae3','samsung'].forEach(a => {
       const idx = data.accounts[a].stocks.findIndex(s => s.id === editingId);
       if (idx > -1) {
         const old = data.accounts[a].stocks[idx];
@@ -510,7 +504,7 @@ function saveStock() {
 
 function deleteStock() {
   if (!editingId) return;
-  ['mirae1','mirae2','samsung'].forEach(a => {
+  ['mirae1','mirae2','mirae3','samsung'].forEach(a => {
     data.accounts[a].stocks = data.accounts[a].stocks.filter(s => s.id !== editingId);
   });
   save(); closeModal(); render();
