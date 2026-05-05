@@ -249,7 +249,7 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 // ⚠️ 본인의 Cloudflare Worker URL을 여기에 붙여넣으세요 (끝에 / 없이)
 // 예: 'https://stock-proxy.myname.workers.dev'
 // 비워두면 공용 프록시만 사용합니다.
-const MY_WORKER_URL = '';
+const MY_WORKER_URL = 'https://stock-proxy.ssangku2.workers.dev';
 
 const PROXIES = [
   ...(MY_WORKER_URL ? [{ name: '내 프록시', fn: url => `${MY_WORKER_URL}/?url=${encodeURIComponent(url)}` }] : []),
