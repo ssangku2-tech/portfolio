@@ -141,12 +141,13 @@ body.ind-light .menu-item{color:#2A3142}
 
 /* 주요 지표 카드 (라이트) */
 #view-indicators{padding:12px 12px calc(96px + env(safe-area-inset-bottom,0))}
-.ind-datebar{max-width:480px;margin:0 auto 14px;padding:13px 18px;font-size:17px;font-weight:800;color:#fff;background:linear-gradient(135deg,#E5780F,#F59E0B);border-radius:14px;letter-spacing:-0.3px;box-shadow:0 3px 10px rgba(229,120,15,0.25);display:flex;align-items:center;gap:8px}
-.ind-datebar .dt-sub{font-size:12px;font-weight:600;color:rgba(255,255,255,0.85);margin-left:auto}
-.ind-card{background:#FFFFFF;border:1px solid #EAEEF5;border-radius:16px;padding:11px 14px 9px;margin:0 auto 9px;max-width:480px;box-shadow:0 2px 10px rgba(30,50,90,0.045)}
-.ind-card-title{font-size:13px;font-weight:800;color:#1A1F2E;margin-bottom:5px;display:flex;align-items:center;gap:6px;justify-content:space-between;letter-spacing:-0.3px}
+.ind-datebar{max-width:480px;margin:0 auto 10px;padding:0 2px;font-size:13px;font-weight:700;color:#4A5468;letter-spacing:-0.2px;display:flex;align-items:baseline;gap:8px}
+.ind-datebar .dt-sub{font-size:11px;font-weight:600;color:#9AA3B5;margin-left:auto}
+.ind-panel{background:#FFFFFF;border:1px solid #EAEEF5;border-radius:16px;max-width:480px;margin:0 auto 9px;box-shadow:0 2px 10px rgba(30,50,90,0.045);overflow:hidden}
+.ind-card{padding:12px 14px 10px}
+.ind-card + .ind-card{border-top:1px solid #EEF1F7}
+.ind-card-title{font-size:11.5px;font-weight:700;color:#9AA3B5;margin-bottom:7px;display:flex;align-items:center;gap:6px;justify-content:space-between;letter-spacing:.01em}
 .ind-card-title .ttl{display:flex;align-items:center;gap:7px}
-.ttl .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block}
 .ind-tag{font-size:10px;font-weight:700;color:#8A93A8;background:#F0F3F9;padding:2px 7px;border-radius:6px}
 .ind-add-btn{background:#EEF3FB;border:1px solid #D5E2F5;color:#2563EB;border-radius:8px;padding:4px 11px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
 .ind-add-btn:active{background:#DCE8FA}
@@ -158,21 +159,26 @@ body.ind-light .menu-item{color:#2A3142}
 .ind-spark{flex:1 1 auto;min-width:40px;height:28px;display:flex;align-items:center;margin:0 10px}
 .ind-name{font-size:13.5px;color:#1F2533;font-weight:700;letter-spacing:-0.2px}
 .ind-sub{font-size:11px;color:#9AA3B5;margin-top:1px}
-.ind-price{font-size:14.5px;font-weight:800;color:#1A1F2E;letter-spacing:-0.3px}
+.ind-price{font-size:14.5px;font-weight:800;color:#1A1F2E;letter-spacing:-0.3px;font-variant-numeric:tabular-nums}
 .ind-price.muted{color:#B5BCC9}
-.ind-chg{font-size:11.5px;font-weight:700;margin-top:1px}
+.ind-chg{font-size:11.5px;font-weight:700;margin-top:1px;font-variant-numeric:tabular-nums}
 .ind-issue{font-size:10.5px;color:#9AA3B5;line-height:1.45;margin-top:7px;padding-top:7px;border-top:1px dashed #EAEEF2}
 .ind-loading{color:#A5ADBD;font-size:12px;text-align:center;padding:14px}
 /* 2줄 컴팩트 지표 행 */
-.ind2-item{padding:8px 0;border-bottom:1px solid #F2F4F9}
+.ind2-item{padding:9px 0;border-bottom:1px solid #F2F4F9}
 .ind2-item:last-child{border-bottom:none}
 .ind2-r1{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .ind2-name{font-size:13px;font-weight:700;color:#1F2533;letter-spacing:-0.2px}
-.ind2-val{font-size:15px;font-weight:800;color:#1A1F2E;white-space:nowrap;letter-spacing:-0.3px}
-.ind2-r2{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:2px}
-.ind2-sub{font-size:11px;color:#9AA3B5;white-space:nowrap;flex:0 1 auto;min-width:64px;overflow:hidden;text-overflow:ellipsis}
-.ind2-sub b{font-weight:700}
-.ind2-spark{flex:1 1 auto;min-width:40px;height:22px;display:flex;align-items:center}
+.ind2-val{font-size:15px;font-weight:800;color:#1A1F2E;white-space:nowrap;letter-spacing:-0.3px;font-variant-numeric:tabular-nums}
+.ind2-r2{display:flex;align-items:center;gap:8px;margin-top:5px}
+.ind2-sub{flex-shrink:0;max-width:40%;font-size:10.5px;color:#9AA3B5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ind2-spark{flex:1 1 auto;min-width:32px;height:22px;display:flex;align-items:center}
+.pill{display:inline-block;flex-shrink:0;font-size:10px;font-weight:700;padding:2.5px 7px;border-radius:6px;white-space:nowrap}
+.pill.pos{background:#FDEBEC;color:#E5384E}
+.pill.neg{background:#EAF1FE;color:#1F6FEB}
+.pill.neg2{background:#EAF1FE;color:#1F6FEB}
+.pill.warn{background:#FDF1E4;color:#E5884E}
+.pill.neu{background:#F0F1F5;color:#8A93A8}
 .ind-stock-row{padding:10px 0;border-bottom:1px solid #F2F4F9}
 .ind-stock-row:last-child{border-bottom:none}
 .ind-stock-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
@@ -370,7 +376,7 @@ body.ind-light .neu, #view-indicators .neu{color:#9AA3B5}
 
 <div class="header">
   <div class="header-top">
-    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.16</span>
+    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.17</span>
     <div class="header-btns">
       <button class="icon-btn" onclick="toggleMenu()" title="메뉴">⋮</button>
       <button class="refresh-btn" onclick="refreshAll()">
@@ -1733,9 +1739,11 @@ function sparkline(values) {
   const up = vals[vals.length - 1] >= vals[0];
   const color = up ? '#E5384E' : '#1F6FEB';
   const areaPts = `${pad},${H-pad} ${pts.join(' ')} ${W-pad},${H-pad}`;
+  const [lastX, lastY] = pts[pts.length - 1].split(',');
   return `<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
     <polygon points="${areaPts}" fill="${color}" opacity="0.09"/>
     <polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${lastX}" cy="${lastY}" r="2.4" fill="${color}"/>
   </svg>`;
 }
 
@@ -1859,7 +1867,7 @@ function realizedVolSeries(closes, period = 20, points = 15) {
 // 코스피 변동성 해석 (실현변동성 기준, VKOSPI 유사 임계)
 function judgeKrVol(v) {
   if (v == null) return { t: '—', c: 'neu' };
-  if (v >= 30) return { t: '공포 극대', c: 'neg' };
+  if (v >= 30) return { t: '공포극대', c: 'neg' };
   if (v >= 22) return { t: '경계', c: 'warn' };
   if (v <= 13) return { t: '안정', c: 'pos' };
   return { t: '보통', c: 'neu' };
@@ -1912,56 +1920,56 @@ function calcMACD(closes, fast = 12, slow = 26, signal = 9) {
   return { macd: macdLine[last], signal: signalLine[last], hist: macdLine[last] - signalLine[last] };
 }
 
-// 해석 라벨 (값 → {텍스트, 등급색})
+// 해석 라벨 (값 → {텍스트, 등급색}) - 텍스트는 배지(pill)에 들어가므로 짧게 유지
 function judgeYieldSpread(v) {
   if (v == null) return { t: '—', c: 'neu' };
-  if (v < 0) return { t: '⚠ 역전 (침체 신호)', c: 'neg' };
-  if (v < 0.3) return { t: '평탄 (주의)', c: 'warn' };
+  if (v < 0) return { t: '역전', c: 'neg' };
+  if (v < 0.3) return { t: '평탄', c: 'warn' };
   return { t: '정상', c: 'pos' };
 }
 function judgeHYSpread(v) {
   if (v == null) return { t: '—', c: 'neu' };
-  if (v >= 5) return { t: '⚠ 확대 (위험 경계)', c: 'neg' };
-  if (v >= 3.5) return { t: '다소 확대', c: 'warn' };
+  if (v >= 5) return { t: '확대', c: 'neg' };
+  if (v >= 3.5) return { t: '다소확대', c: 'warn' };
   return { t: '안정', c: 'pos' };
 }
 function judgeIGSpread(v) {
   if (v == null) return { t: '—', c: 'neu' };
-  if (v >= 1.8) return { t: '⚠ 확대 (신용경계)', c: 'neg' };
-  if (v >= 1.3) return { t: '다소 확대', c: 'warn' };
+  if (v >= 1.8) return { t: '확대', c: 'neg' };
+  if (v >= 1.3) return { t: '다소확대', c: 'warn' };
   return { t: '안정', c: 'pos' };
 }
 function judgeMOVE(v) {
   if (v == null) return { t: '—', c: 'neu' };
-  if (v >= 130) return { t: '⚠ 급등 (채권변동성 위험)', c: 'neg' };
+  if (v >= 130) return { t: '급등', c: 'neg' };
   if (v >= 100) return { t: '경계', c: 'warn' };
   if (v <= 80) return { t: '안정', c: 'pos' };
   return { t: '보통', c: 'neu' };
 }
 function judgeMACD(m) {
   if (!m) return { t: '—', c: 'neu' };
-  if (m.hist > 0) return { t: m.macd > 0 ? '상승 우위 (골든크로스)' : '약세 반등', c: 'pos' };
-  if (m.hist < 0) return { t: m.macd < 0 ? '하락 우위 (데드크로스)' : '상승 둔화', c: 'neg' };
-  return { t: '중립 (교차 시점)', c: 'neu' };
+  if (m.hist > 0) return { t: m.macd > 0 ? '골든크로스' : '약세반등', c: 'pos' };
+  if (m.hist < 0) return { t: m.macd < 0 ? '데드크로스' : '상승둔화', c: 'neg' };
+  return { t: '중립', c: 'neu' };
 }
 function judgeVIX(v) {
   if (v == null) return { t: '—', c: 'neu' };
-  if (v >= 30) return { t: '공포 극대 (바닥 근접?)', c: 'neg' };
+  if (v >= 30) return { t: '공포극대', c: 'neg' };
   if (v >= 20) return { t: '경계', c: 'warn' };
-  if (v <= 15) return { t: '안일 (조정 대비)', c: 'warn' };
+  if (v <= 15) return { t: '안일', c: 'warn' };
   return { t: '보통', c: 'pos' };
 }
 function judgeRSI(v) {
   if (v == null) return { t: '—', c: 'neu' };
-  if (v >= 70) return { t: '과열 (매도 검토)', c: 'neg' };
-  if (v <= 30) return { t: '과매도 (매수 검토)', c: 'pos' };
+  if (v >= 70) return { t: '과열', c: 'neg' };
+  if (v <= 30) return { t: '과매도', c: 'pos' };
   return { t: '중립', c: 'neu' };
 }
 function judgeBollinger(p) {
   if (p == null) return { t: '—', c: 'neu' };
-  if (p > 1) return { t: '상단 돌파 (과열)', c: 'neg' };
+  if (p > 1) return { t: '상단돌파', c: 'neg' };
   if (p >= 0.8) return { t: '상단권', c: 'warn' };
-  if (p < 0) return { t: '하단 이탈 (과매도)', c: 'pos' };
+  if (p < 0) return { t: '하단이탈', c: 'pos' };
   if (p <= 0.2) return { t: '하단권', c: 'warn' };
   return { t: '중간', c: 'neu' };
 }
@@ -1971,29 +1979,31 @@ async function renderIndicators(forceRefresh = false) {
   const root = document.getElementById('view-indicators');
 
   root.innerHTML = `
-    <div class="ind-datebar" id="ind-hero-date">Market Signals</div>
-    <div class="ind-card" id="ind-us">
-      <div class="ind-card-title"><span class="ttl"><i class="dot" style="background:#E5384E"></i> 미국 증시 <span class="ind-tag">전일</span></span></div>
-      <div class="ind-loading">불러오는 중…</div>
-    </div>
-    <div class="ind-card" id="ind-fxoil">
-      <div class="ind-card-title"><span class="ttl"><i class="dot" style="background:#3DD9A0"></i> 환율 · 유가</span></div>
-      <div class="ind-loading">불러오는 중…</div>
-    </div>
-    <div class="ind-card" id="ind-risk">
-      <div class="ind-card-title"><span class="ttl"><i class="dot" style="background:#A78BFA"></i> 선행·위험 지표</span></div>
-      <div class="ind-loading">불러오는 중…</div>
-    </div>
-    <div class="ind-card" id="ind-tech">
-      <div class="ind-card-title"><span class="ttl"><i class="dot" style="background:#2563EB"></i> 기술적 지표 (과매수·과매도)</span></div>
-      <div class="ind-loading">불러오는 중…</div>
-    </div>
-    <div class="ind-card" id="ind-stocks">
-      <div class="ind-card-title">
-        <span class="ttl"><i class="dot" style="background:#FFD166"></i> 주요 종목 현황</span>
-        <button class="ind-add-btn" onclick="openIndModal()">＋ 종목 추가</button>
+    <div class="ind-datebar" id="ind-hero-date"></div>
+    <div class="ind-panel">
+      <div class="ind-card" id="ind-us">
+        <div class="ind-card-title"><span class="ttl">미국 증시 <span class="ind-tag">전일</span></span></div>
+        <div class="ind-loading">불러오는 중…</div>
       </div>
-      <div id="ind-stocks-body"></div>
+      <div class="ind-card" id="ind-fxoil">
+        <div class="ind-card-title"><span class="ttl">환율 · 유가</span></div>
+        <div class="ind-loading">불러오는 중…</div>
+      </div>
+      <div class="ind-card" id="ind-risk">
+        <div class="ind-card-title"><span class="ttl">선행·위험 지표</span></div>
+        <div class="ind-loading">불러오는 중…</div>
+      </div>
+      <div class="ind-card" id="ind-tech">
+        <div class="ind-card-title"><span class="ttl">기술적 지표 (과매수·과매도)</span></div>
+        <div class="ind-loading">불러오는 중…</div>
+      </div>
+      <div class="ind-card" id="ind-stocks">
+        <div class="ind-card-title">
+          <span class="ttl">주요 종목 현황</span>
+          <button class="ind-add-btn" onclick="openIndModal()">＋ 종목 추가</button>
+        </div>
+        <div id="ind-stocks-body"></div>
+      </div>
     </div>
   `;
   // 날짜 표기
@@ -2026,7 +2036,7 @@ async function renderIndicators(forceRefresh = false) {
       </div>`;
     }).join('');
     document.getElementById('ind-us').innerHTML =
-      `<div class="ind-card-title"><span class="ttl"><i class="dot" style="background:#E5384E"></i> 미국 증시 <span class="ind-tag">전일</span></span></div>${rows}`;
+      `<div class="ind-card-title"><span class="ttl">미국 증시 <span class="ind-tag">전일</span></span></div>${rows}`;
   });
 
   // 환율 · 유가 (통합)
@@ -2053,7 +2063,7 @@ async function renderIndicators(forceRefresh = false) {
           <div class="ind-chg ${cls(chg)}">${chg>=0?'▲':'▼'} ${fmt(Math.abs(chg)).replace(/[^0-9.,]/g,'')} (${fmtPct(chgPct)})</div></div>
       </div>`;
     };
-    el.innerHTML = `<div class="ind-card-title"><span class="ttl"><i class="dot" style="background:#3DD9A0"></i> 환율 · 유가</span></div>`
+    el.innerHTML = `<div class="ind-card-title"><span class="ttl">환율 · 유가</span></div>`
       + mkRow('USD / KRW', '원·달러', fx, fxH, v => fmtNum(v,1)+'원')
       + mkRow('WTI 원유', 'USD/배럴', oil, oilH, v => '$'+fmtNum(v,2));
   });
@@ -2131,10 +2141,10 @@ async function renderIndicators(forceRefresh = false) {
     // 달러인덱스
     if (dxy && dxy.price != null) {
       const chg = dxy.prev ? dxy.price - dxy.prev : 0;
-      const j = { t: chg>0?'강세 (신흥국 유출↑)':'약세', c: chg>0?'warn':'pos' };
+      const j = { t: chg>0?'강세':'약세', c: chg>0?'warn':'pos' };
       rows.push(riskRow('달러 인덱스', 'DXY', fmtNum(dxy.price,2), sparkline((dxyH||[]).slice(-15)), j));
     }
-    el.innerHTML = `<div class="ind-card-title"><span class="ttl"><i class="dot" style="background:#A78BFA"></i> 선행·위험 지표</span></div>` +
+    el.innerHTML = `<div class="ind-card-title"><span class="ttl">선행·위험 지표</span></div>` +
       (rows.length ? rows.join('') : '<div class="ind-placeholder">데이터를 불러오지 못했습니다</div>') +
       (rows.length ? `<div class="ind-issue">${(yc&&yc.date)?`📅 금리·스프레드 기준일: ${yc.date} · `:''}※ 코스피 변동성은 종가 기반 실현변동성으로 산출한 <b>근사치</b>입니다 (실제 VKOSPI와 다소 차이날 수 있음)</div>` : '');
   });
@@ -2151,13 +2161,15 @@ async function renderIndicators(forceRefresh = false) {
       rows.push(`<div class="ind2-item">
         <div class="ind2-r1"><span class="ind2-name">${name}</span><span class="ind2-val">${rsi!=null?rsi.toFixed(0):'—'}</span></div>
         <div class="ind2-r2">
-          <span class="ind2-sub">RSI(14) · <b class="${jr.c}">${jr.t}</b></span>
+          <span class="pill ${jr.c}">${jr.t}</span>
           <span class="ind2-spark">${sparkline(closes.slice(-15))}</span>
+          <span class="ind2-sub">RSI(14)</span>
         </div>`);
       if (boll) {
         const jb = judgeBollinger(boll.pctB);
         rows.push(`<div class="ind2-r2" style="margin-top:4px">
-          <span class="ind2-sub">└ 볼린저 %B · <b class="${jb.c}">${jb.t}</b></span>
+          <span class="pill ${jb.c}">${jb.t}</span>
+          <span class="ind2-sub" style="flex:1 1 auto;max-width:none">볼린저 %B</span>
           <span class="ind2-val" style="font-size:13px">${(boll.pctB*100).toFixed(0)}%</span>
         </div>`);
       }
@@ -2167,7 +2179,8 @@ async function renderIndicators(forceRefresh = false) {
         const jm = judgeMACD(macd);
         const histPct = macd.hist / closes[closes.length - 1] * 100;
         rows.push(`<div class="ind2-r2" style="margin-top:3px">
-          <span class="ind2-sub">└ MACD(12,26,9) · <b class="${jm.c}">${jm.t}</b></span>
+          <span class="pill ${jm.c}">${jm.t}</span>
+          <span class="ind2-sub" style="flex:1 1 auto;max-width:none">MACD(12,26,9)</span>
           <span class="ind2-val" style="font-size:13px">${histPct>=0?'+':''}${histPct.toFixed(2)}%</span>
         </div>`);
       }
@@ -2176,13 +2189,14 @@ async function renderIndicators(forceRefresh = false) {
       if (disp != null) {
         const jd = judgeDisparity(disp);
         rows.push(`<div class="ind2-r2" style="margin-top:3px">
-          <span class="ind2-sub">└ 이격도(20일) · <b class="${jd.c}">${jd.t}</b></span>
+          <span class="pill ${jd.c}">${jd.t}</span>
+          <span class="ind2-sub" style="flex:1 1 auto;max-width:none">이격도(20일)</span>
           <span class="ind2-val" style="font-size:13px">${disp.toFixed(1)}</span>
         </div>`);
       }
       rows.push(`</div>`);
     });
-    el.innerHTML = `<div class="ind-card-title"><span class="ttl"><i class="dot" style="background:#2563EB"></i> 기술적 지표 (과매수·과매도)</span></div>` +
+    el.innerHTML = `<div class="ind-card-title"><span class="ttl">기술적 지표 (과매수·과매도)</span></div>` +
       (rows.length ? rows.join('') : '<div class="ind-placeholder">데이터를 불러오지 못했습니다</div>') +
       `<div class="ind-issue">RSI 70↑ 과열 / 30↓ 과매도 · %B 100%↑ 상단돌파 / 0%↓ 하단이탈 · MACD 히스토그램 0↑ 골든크로스 / 0↓ 데드크로스 · 이격도 105↑ 과열 / 95↓ 과매도</div>`;
   });
@@ -2190,13 +2204,14 @@ async function renderIndicators(forceRefresh = false) {
   renderIndicatorStocks();
 }
 
-// 위험지표 행 HTML (2줄 컴팩트: 이름|값 / 부제·해석|그래프)
+// 위험지표 행 HTML (2줄 컴팩트: 이름|값 / 배지·그래프·부제)
 function riskRow(name, sub, value, spark, judge) {
   return `<div class="ind2-item">
     <div class="ind2-r1"><span class="ind2-name">${name}</span><span class="ind2-val">${value}</span></div>
     <div class="ind2-r2">
-      <span class="ind2-sub">${sub} · <b class="${judge.c}">${judge.t}</b></span>
+      <span class="pill ${judge.c}">${judge.t}</span>
       <span class="ind2-spark">${spark}</span>
+      <span class="ind2-sub">${sub}</span>
     </div>
   </div>`;
 }
