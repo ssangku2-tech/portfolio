@@ -13,7 +13,6 @@
 <title>내 주식 현황</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root{--ind-spark-w:92px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overscroll-behavior:none}
 body{font-family:'Noto Sans KR',sans-serif;background:#0B0F19;color:#EDF0FF;min-height:100vh;max-width:480px;margin:0 auto;position:relative}
@@ -155,8 +154,8 @@ body.ind-light .menu-item{color:#2A3142}
 .ind-row.compact{padding:7px 0}
 .ind-row:last-child{border-bottom:none}
 .ind-rowmain{flex-shrink:0;width:78px;min-width:0}
-.ind-vals{text-align:right;white-space:nowrap;flex-shrink:0;margin-left:auto;min-width:90px}
-.ind-spark{flex:0 0 var(--ind-spark-w);width:var(--ind-spark-w);height:28px;display:flex;align-items:center;margin:0 10px}
+.ind-vals{text-align:right;white-space:nowrap;flex-shrink:0;margin-left:auto}
+.ind-spark{flex:1 1 auto;min-width:40px;height:28px;display:flex;align-items:center;margin:0 10px}
 .ind-name{font-size:13.5px;color:#1F2533;font-weight:700;letter-spacing:-0.2px}
 .ind-sub{font-size:11px;color:#9AA3B5;margin-top:1px}
 .ind-price{font-size:14.5px;font-weight:800;color:#1A1F2E;letter-spacing:-0.3px}
@@ -170,10 +169,10 @@ body.ind-light .menu-item{color:#2A3142}
 .ind2-r1{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .ind2-name{font-size:13px;font-weight:700;color:#1F2533;letter-spacing:-0.2px}
 .ind2-val{font-size:15px;font-weight:800;color:#1A1F2E;white-space:nowrap;letter-spacing:-0.3px}
-.ind2-r2{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:2px}
-.ind2-sub{font-size:11px;color:#9AA3B5;white-space:nowrap;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.ind2-r2{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:2px}
+.ind2-sub{font-size:11px;color:#9AA3B5;white-space:nowrap;flex:0 1 auto;min-width:64px;overflow:hidden;text-overflow:ellipsis}
 .ind2-sub b{font-weight:700}
-.ind2-spark{flex-shrink:0;width:var(--ind-spark-w);height:22px;display:flex;align-items:center}
+.ind2-spark{flex:1 1 auto;min-width:40px;height:22px;display:flex;align-items:center}
 .ind-stock-row{padding:10px 0;border-bottom:1px solid #F2F4F9}
 .ind-stock-row:last-child{border-bottom:none}
 .ind-stock-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
@@ -371,7 +370,7 @@ body.ind-light .neu, #view-indicators .neu{color:#9AA3B5}
 
 <div class="header">
   <div class="header-top">
-    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.15</span>
+    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.16</span>
     <div class="header-btns">
       <button class="icon-btn" onclick="toggleMenu()" title="메뉴">⋮</button>
       <button class="refresh-btn" onclick="refreshAll()">
