@@ -12,7 +12,7 @@ A single-file, no-build static PWA: a personal Korean stock portfolio tracker ("
 - **Every change must bump the `app-ver` string** in the header (`<span class="app-ver">v1.12</span>`). This app has no service worker/cache-busting mechanism, so this version bump is the only user-visible signal that the deployed file changed.
 - **Commit messages in Korean.**
 - **Conversation with the user in Korean.**
-- **After finishing a code change, commit and push to `origin/main` directly without asking for confirmation first.** This repo has no CI/build/staging step — the working tree *is* the deployed site, so committing is low-risk and expected at the end of each change.
+- **Always ask for confirmation before committing or pushing.** Do not commit/push automatically after finishing a code change.
 
 ## Development workflow
 
