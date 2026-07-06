@@ -13,6 +13,7 @@
 <title>내 주식 현황</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
+:root{--ind-spark-w:92px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overscroll-behavior:none}
 body{font-family:'Noto Sans KR',sans-serif;background:#0B0F19;color:#EDF0FF;min-height:100vh;max-width:480px;margin:0 auto;position:relative}
@@ -154,8 +155,8 @@ body.ind-light .menu-item{color:#2A3142}
 .ind-row.compact{padding:7px 0}
 .ind-row:last-child{border-bottom:none}
 .ind-rowmain{flex-shrink:0;width:78px;min-width:0}
-.ind-vals{text-align:right;white-space:nowrap;flex-shrink:0;margin-left:auto}
-.ind-spark{flex:1;min-width:60px;height:28px;display:flex;align-items:center;margin:0 10px}
+.ind-vals{text-align:right;white-space:nowrap;flex-shrink:0;margin-left:auto;min-width:90px}
+.ind-spark{flex:0 0 var(--ind-spark-w);width:var(--ind-spark-w);height:28px;display:flex;align-items:center;margin:0 10px}
 .ind-name{font-size:13.5px;color:#1F2533;font-weight:700;letter-spacing:-0.2px}
 .ind-sub{font-size:11px;color:#9AA3B5;margin-top:1px}
 .ind-price{font-size:14.5px;font-weight:800;color:#1A1F2E;letter-spacing:-0.3px}
@@ -172,7 +173,7 @@ body.ind-light .menu-item{color:#2A3142}
 .ind2-r2{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:2px}
 .ind2-sub{font-size:11px;color:#9AA3B5;white-space:nowrap;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .ind2-sub b{font-weight:700}
-.ind2-spark{flex-shrink:0;width:140px;height:22px;display:flex;align-items:center}
+.ind2-spark{flex-shrink:0;width:var(--ind-spark-w);height:22px;display:flex;align-items:center}
 .ind-stock-row{padding:10px 0;border-bottom:1px solid #F2F4F9}
 .ind-stock-row:last-child{border-bottom:none}
 .ind-stock-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
@@ -370,7 +371,7 @@ body.ind-light .neu, #view-indicators .neu{color:#9AA3B5}
 
 <div class="header">
   <div class="header-top">
-    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.12</span>
+    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.15</span>
     <div class="header-btns">
       <button class="icon-btn" onclick="toggleMenu()" title="메뉴">⋮</button>
       <button class="refresh-btn" onclick="refreshAll()">
@@ -825,6 +826,17 @@ function fmtPctPlain(n) {
   return n.toFixed(2) + '%';
 }
 
+// '오늘 매입' 플래그는 실제 매입한 그 날에만 유효해야 함.
+// boughtDate가 없거나(구버전 데이터) 오늘이 아니면 만료로 간주 → 전일종가 기준으로 자동 전환
+// (플래그를 계속 켜두면 당일 손익이 며칠이 지나도 매입 평단가 기준으로 계산돼 부호가 뒤집혀 보이는 문제 방지)
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
+function isBoughtToday(s) {
+  return !!s.boughtToday && s.boughtDate === todayStr();
+}
+
 // 미래에셋1, 2만 합산 (미래에셋3, 삼성증권 제외)
 function aggregateAllStocks() {
   const map = new Map();
@@ -855,11 +867,11 @@ function aggregateAllStocks() {
       if (s.currency) agg.currency = s.currency;
       if (s.currentPrice) agg.currentPrice = s.currentPrice;
       if (s.prevClose) agg.prevClose = s.prevClose;
-      if (s.boughtToday) agg.boughtToday = true;
+      if (isBoughtToday(s)) agg.boughtToday = true;
       if (s.priceError && !agg.currentPrice) agg.priceError = true;
       // 오늘 손익은 lot(원본)별 기준가로 합산
       if (s.currentPrice) {
-        const baseUnit = s.boughtToday ? (s.avgPrice || 0) : (s.prevClose || 0);
+        const baseUnit = isBoughtToday(s) ? (s.avgPrice || 0) : (s.prevClose || 0);
         if (baseUnit) {
           agg.dayPnl += (s.currentPrice - baseUnit) * (s.qty || 0);
           agg.dayBase += baseUnit * (s.qty || 0);
@@ -892,7 +904,7 @@ function renderStockCard(s, clickable = true, showDaily = false) {
     dayBase = s.dayBase || 0;
     dayPnl = (s.currentPrice && dayBase) ? s.dayPnl : null;
   } else {
-    const dayBaseUnit = s.boughtToday ? (s.avgPrice || 0) : (s.prevClose || 0);
+    const dayBaseUnit = isBoughtToday(s) ? (s.avgPrice || 0) : (s.prevClose || 0);
     dayPnl = (s.currentPrice && dayBaseUnit) ? (s.currentPrice - dayBaseUnit) * (s.qty||0) : null;
     dayBase = dayBaseUnit * (s.qty||0);
   }
@@ -1276,7 +1288,7 @@ function render() {
       data.accounts[acc].stocks.forEach(s => {
         if (!s.currentPrice) return;
         const fx = fxOf(s);
-        const base = s.boughtToday ? (s.avgPrice || 0) : (s.prevClose || 0);
+        const base = isBoughtToday(s) ? (s.avgPrice || 0) : (s.prevClose || 0);
         if (base) {
           dailyPnl += (s.currentPrice - base) * (s.qty || 0) * fx;
           dailyBase += base * (s.qty || 0) * fx;
@@ -1410,7 +1422,7 @@ function render() {
     totalInvested += (s.avgPrice || 0) * (s.qty || 0) * fx;
     if (s.currentPrice) {
       totalCurrent += s.currentPrice * (s.qty || 0) * fx;
-      const base = s.boughtToday ? (s.avgPrice || 0) : (s.prevClose || 0);
+      const base = isBoughtToday(s) ? (s.avgPrice || 0) : (s.prevClose || 0);
       if (base) {
         dailyPnl += (s.currentPrice - base) * (s.qty || 0) * fx;
         dailyBase += base * (s.qty || 0) * fx;
@@ -1879,6 +1891,28 @@ function calcBollingerB(closes, period = 20, mult = 2) {
   return { pctB: (last - lower) / (upper - lower), upper, lower, mean };
 }
 
+// 지수이동평균 (EMA) - MACD 계산용
+function ema(values, period) {
+  const k = 2 / (period + 1);
+  let prev = values[0];
+  const out = [prev];
+  for (let i = 1; i < values.length; i++) {
+    prev = values[i] * k + prev * (1 - k);
+    out.push(prev);
+  }
+  return out;
+}
+// MACD(12,26,9) - EMA12-EMA26 및 시그널선(EMA9), 히스토그램(=MACD-시그널)
+function calcMACD(closes, fast = 12, slow = 26, signal = 9) {
+  if (!closes || closes.length < slow + signal) return null;
+  const emaFast = ema(closes, fast);
+  const emaSlow = ema(closes, slow);
+  const macdLine = closes.map((_, i) => emaFast[i] - emaSlow[i]);
+  const signalLine = ema(macdLine, signal);
+  const last = macdLine.length - 1;
+  return { macd: macdLine[last], signal: signalLine[last], hist: macdLine[last] - signalLine[last] };
+}
+
 // 해석 라벨 (값 → {텍스트, 등급색})
 function judgeYieldSpread(v) {
   if (v == null) return { t: '—', c: 'neu' };
@@ -1891,6 +1925,25 @@ function judgeHYSpread(v) {
   if (v >= 5) return { t: '⚠ 확대 (위험 경계)', c: 'neg' };
   if (v >= 3.5) return { t: '다소 확대', c: 'warn' };
   return { t: '안정', c: 'pos' };
+}
+function judgeIGSpread(v) {
+  if (v == null) return { t: '—', c: 'neu' };
+  if (v >= 1.8) return { t: '⚠ 확대 (신용경계)', c: 'neg' };
+  if (v >= 1.3) return { t: '다소 확대', c: 'warn' };
+  return { t: '안정', c: 'pos' };
+}
+function judgeMOVE(v) {
+  if (v == null) return { t: '—', c: 'neu' };
+  if (v >= 130) return { t: '⚠ 급등 (채권변동성 위험)', c: 'neg' };
+  if (v >= 100) return { t: '경계', c: 'warn' };
+  if (v <= 80) return { t: '안정', c: 'pos' };
+  return { t: '보통', c: 'neu' };
+}
+function judgeMACD(m) {
+  if (!m) return { t: '—', c: 'neu' };
+  if (m.hist > 0) return { t: m.macd > 0 ? '상승 우위 (골든크로스)' : '약세 반등', c: 'pos' };
+  if (m.hist < 0) return { t: m.macd < 0 ? '하락 우위 (데드크로스)' : '상승 둔화', c: 'neg' };
+  return { t: '중립 (교차 시점)', c: 'neu' };
 }
 function judgeVIX(v) {
   if (v == null) return { t: '—', c: 'neu' };
@@ -2006,14 +2059,16 @@ async function renderIndicators(forceRefresh = false) {
       + mkRow('WTI 원유', 'USD/배럴', oil, oilH, v => '$'+fmtNum(v,2));
   });
 
-  // 선행·위험 지표 (금리차·국채금리·하이일드·VIX·코스피변동성·달러)
+  // 선행·위험 지표 (금리차·국채금리·신용스프레드·VIX·MOVE·코스피변동성·달러)
   Promise.all([
     fetchFred('T10Y2Y'), fetchFred('BAMLH0A0HYM2'),
     fetchPrice('^VIX').catch(()=>null), fetchPrice('DX-Y.NYB').catch(()=>null),
     fetchHist('^VIX').catch(()=>null), fetchHist('DX-Y.NYB').catch(()=>null),
     fetchHist('^KS11').catch(()=>null),
-    fetchFred('DGS10'), fetchFred('DGS2')
-  ]).then(([yc, hy, vix, dxy, vixH, dxyH, ksH, y10, y2]) => {
+    fetchFred('DGS10'), fetchFred('DGS2'),
+    fetchFred('T10Y3M'), fetchFred('BAMLC0A0CM'),
+    fetchPrice('^MOVE').catch(()=>null), fetchHist('^MOVE').catch(()=>null)
+  ]).then(([yc, hy, vix, dxy, vixH, dxyH, ksH, y10, y2, t3m, ig, move, moveH]) => {
     const el = document.getElementById('ind-risk');
     const rows = [];
     const yieldJudge = (r) => {
@@ -2033,6 +2088,11 @@ async function renderIndicators(forceRefresh = false) {
       const j = judgeYieldSpread(yc.value);
       rows.push(riskRow('장단기 금리차', '미 국채 10년-2년', yc.value.toFixed(2)+'%p', sparkline((yc.history||[]).slice(-15)), j));
     }
+    // 3개월-10년 금리차 (NY 연준이 침체 예측에 더 신뢰하는 스프레드)
+    if (t3m && t3m.value != null) {
+      const j = judgeYieldSpread(t3m.value);
+      rows.push(riskRow('3개월-10년 금리차', '미 국채 10년-3개월', t3m.value.toFixed(2)+'%p', sparkline((t3m.history||[]).slice(-15)), j));
+    }
     // 미 국채 10년물
     if (y10 && y10.value != null) {
       rows.push(riskRow('미 국채 10년물', '10Y 금리', y10.value.toFixed(2)+'%', sparkline((y10.history||[]).slice(-15)), yieldJudge(y10)));
@@ -2046,10 +2106,20 @@ async function renderIndicators(forceRefresh = false) {
       const j = judgeHYSpread(hy.value);
       rows.push(riskRow('하이일드 스프레드', '부실채권 위험도', hy.value.toFixed(2)+'%p', sparkline((hy.history||[]).slice(-15)), j));
     }
+    // 투자등급 신용스프레드 (하이일드와 함께 신용시장 전반 파악)
+    if (ig && ig.value != null) {
+      const j = judgeIGSpread(ig.value);
+      rows.push(riskRow('투자등급 신용스프레드', 'IG 회사채 위험도', ig.value.toFixed(2)+'%p', sparkline((ig.history||[]).slice(-15)), j));
+    }
     // VIX
     if (vix && vix.price != null) {
       const j = judgeVIX(vix.price);
       rows.push(riskRow('VIX 공포지수', 'S&P500 변동성', fmtNum(vix.price,1), sparkline((vixH||[]).slice(-15)), j));
+    }
+    // MOVE 지수 (채권시장 변동성 - VIX의 채권 버전)
+    if (move && move.price != null) {
+      const j = judgeMOVE(move.price);
+      rows.push(riskRow('MOVE 지수', '미 국채 변동성', fmtNum(move.price,1), sparkline((moveH||[]).slice(-15)), j));
     }
     // 코스피 변동성 (실현변동성 근사 - VKOSPI 대용)
     if (ksH && ksH.length > 22) {
@@ -2092,6 +2162,16 @@ async function renderIndicators(forceRefresh = false) {
           <span class="ind2-val" style="font-size:13px">${(boll.pctB*100).toFixed(0)}%</span>
         </div>`);
       }
+      // MACD(12,26,9) - 히스토그램은 종가 대비 %로 정규화해 지수 간 비교 가능하게 표시
+      const macd = calcMACD(closes);
+      if (macd) {
+        const jm = judgeMACD(macd);
+        const histPct = macd.hist / closes[closes.length - 1] * 100;
+        rows.push(`<div class="ind2-r2" style="margin-top:3px">
+          <span class="ind2-sub">└ MACD(12,26,9) · <b class="${jm.c}">${jm.t}</b></span>
+          <span class="ind2-val" style="font-size:13px">${histPct>=0?'+':''}${histPct.toFixed(2)}%</span>
+        </div>`);
+      }
       // 이격도 (20일 이동평균 대비)
       const disp = calcDisparity(closes, 20);
       if (disp != null) {
@@ -2105,7 +2185,7 @@ async function renderIndicators(forceRefresh = false) {
     });
     el.innerHTML = `<div class="ind-card-title"><span class="ttl"><i class="dot" style="background:#2563EB"></i> 기술적 지표 (과매수·과매도)</span></div>` +
       (rows.length ? rows.join('') : '<div class="ind-placeholder">데이터를 불러오지 못했습니다</div>') +
-      `<div class="ind-issue">RSI 70↑ 과열 / 30↓ 과매도 · %B 100%↑ 상단돌파 / 0%↓ 하단이탈 · 이격도 105↑ 과열 / 95↓ 과매도</div>`;
+      `<div class="ind-issue">RSI 70↑ 과열 / 30↓ 과매도 · %B 100%↑ 상단돌파 / 0%↓ 하단이탈 · MACD 히스토그램 0↑ 골든크로스 / 0↓ 데드크로스 · 이격도 105↑ 과열 / 95↓ 과매도</div>`;
   });
 
   renderIndicatorStocks();
@@ -2396,7 +2476,7 @@ function openEditModal(id) {
   document.getElementById('f-qty').value = s.qty;
   document.getElementById('f-avg').value = s.avgPrice;
   document.getElementById('f-account').value = acc;
-  setBoughtTodayUI(!!s.boughtToday);
+  setBoughtTodayUI(isBoughtToday(s));
   document.getElementById('modal-btns').innerHTML = `
     <button class="btn-danger" onclick="deleteStock()">삭제</button>
     <button class="btn-primary" onclick="saveStock()">저장</button>`;
@@ -2410,6 +2490,7 @@ function saveStock() {
   const avg = parseFloat(document.getElementById('f-avg').value);
   const acc = document.getElementById('f-account').value;
   const boughtToday = boughtTodayFlag;
+  const boughtDate = boughtToday ? todayStr() : null;
   if (!name || !code || isNaN(qty) || isNaN(avg)) { showToast('모든 항목을 입력해주세요'); return; }
 
   if (editingId) {
@@ -2417,7 +2498,7 @@ function saveStock() {
       const idx = data.accounts[a].stocks.findIndex(s => s.id === editingId);
       if (idx > -1) {
         const old = data.accounts[a].stocks[idx];
-        const updated = { ...old, name, code, qty, avgPrice: avg, boughtToday };
+        const updated = { ...old, name, code, qty, avgPrice: avg, boughtToday, boughtDate };
         if (a !== acc) {
           data.accounts[a].stocks.splice(idx, 1);
           data.accounts[acc].stocks.push(updated);
@@ -2428,7 +2509,7 @@ function saveStock() {
     });
     showToast('수정되었습니다');
   } else {
-    data.accounts[acc].stocks.push({ id: uid(), name, code, qty, avgPrice: avg, currentPrice: null, boughtToday });
+    data.accounts[acc].stocks.push({ id: uid(), name, code, qty, avgPrice: avg, currentPrice: null, boughtToday, boughtDate });
     showToast('추가되었습니다');
   }
   save(); closeModal(); render();
