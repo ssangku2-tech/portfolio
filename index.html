@@ -376,7 +376,7 @@ body.ind-light .neu, #view-indicators .neu{color:#9AA3B5}
 
 <div class="header">
   <div class="header-top">
-    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.18</span>
+    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.19</span>
     <div class="header-btns">
       <button class="icon-btn" onclick="toggleMenu()" title="메뉴">⋮</button>
       <button class="refresh-btn" onclick="refreshAll()">
@@ -643,11 +643,18 @@ const PROXIES = [
 // 마지막으로 성공한 프록시 기억
 let lastSuccessProxy = null;
 
+// 6자리 순수 숫자(국내 종목코드)면 .KS 접미사를 붙여 네이버/야후 KR로 라우팅되게 함
+// (Worker의 symbol/hist 엔드포인트는 접미사가 있어야 네이버 실시간으로 처리, 없으면 Yahoo 404)
+function toQuoteSymbol(symbol) {
+  return /^\d{6}$/.test(symbol) ? symbol + '.KS' : symbol;
+}
+
 async function fetchPrice(symbol) {
+  const qsym = toQuoteSymbol(symbol);
   // Worker가 설정되어 있으면 symbol 모드 사용 (한국 주식 = 네이버 실시간, 미국 = Yahoo)
   if (MY_WORKER_URL) {
     try {
-      const r = await fetch(`${MY_WORKER_URL}/?symbol=${encodeURIComponent(symbol)}`, {
+      const r = await fetch(`${MY_WORKER_URL}/?symbol=${encodeURIComponent(qsym)}`, {
         signal: AbortSignal.timeout(12000)
       });
       if (r.ok) {
@@ -666,7 +673,7 @@ async function fetchPrice(symbol) {
   }
 
   // Fallback: 공용 프록시 (Yahoo만, 15~20분 지연)
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${qsym}?interval=1d&range=1d`;
   let orderedProxies = [...PROXIES];
   if (lastSuccessProxy) {
     const idx = orderedProxies.findIndex(p => p.name === lastSuccessProxy);
@@ -1779,7 +1786,7 @@ function fmtQty(n) {
 async function fetchHist(symbol) {
   if (!MY_WORKER_URL) return null;
   try {
-    const r = await fetch(`${MY_WORKER_URL}/?hist=${encodeURIComponent(symbol)}`, { signal: AbortSignal.timeout(12000) });
+    const r = await fetch(`${MY_WORKER_URL}/?hist=${encodeURIComponent(toQuoteSymbol(symbol))}`, { signal: AbortSignal.timeout(12000) });
     if (r.ok) { const d = await r.json(); return d.closes || []; }
   } catch(e) {}
   return null;
