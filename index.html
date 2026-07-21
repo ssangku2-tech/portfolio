@@ -2517,7 +2517,11 @@ function saveStock() {
       const idx = data.accounts[a].stocks.findIndex(s => s.id === editingId);
       if (idx > -1) {
         const old = data.accounts[a].stocks[idx];
-        const updated = { ...old, name, code, qty, avgPrice: avg, boughtToday, boughtDate };
+        const codeChanged = old.code !== code;
+        const updated = {
+          ...old, name, code, qty, avgPrice: avg, boughtToday, boughtDate,
+          ...(codeChanged ? { currentPrice: null, prevClose: null, currency: null, priceError: false } : {})
+        };
         if (a !== acc) {
           data.accounts[a].stocks.splice(idx, 1);
           data.accounts[acc].stocks.push(updated);
