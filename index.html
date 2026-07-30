@@ -376,7 +376,7 @@ body.ind-light .neu, #view-indicators .neu{color:#9AA3B5}
 
 <div class="header">
   <div class="header-top">
-    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.19</span>
+    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.20</span>
     <div class="header-btns">
       <button class="icon-btn" onclick="toggleMenu()" title="메뉴">⋮</button>
       <button class="refresh-btn" onclick="refreshAll()">
@@ -518,6 +518,9 @@ let isRefreshing = false;
 let dailyDetailMode = false;  // 종목별 당일 손익 보기 모드
 let mainView = 'indicators'; // 'stocks' | 'indicators'
 let indicatorsLoaded = false;
+let indicatorsFetchedAt = 0;      // 주요 지표 마지막 조회 시각(ms)
+const IND_STALE_MS = 3 * 60 * 1000;  // 이 시간이 지나면 화면 복귀 시 자동 재조회
+let indAutoTimer = null;          // 장중 자동 갱신 타이머
 
 // USD/KRW 환율 (미국 주식 평가액 원화 환산용). 마지막 값 저장.
 let fxUsdKrw = data.fxRate || 1380;
@@ -1706,9 +1709,17 @@ function switchMainView(view) {
   document.getElementById('nav-stocks').classList.toggle('active', !isInd);
   document.body.classList.toggle('ind-light', isInd);  // 라이트 테마
   window.scrollTo(0, 0);
-  if (isInd && !indicatorsLoaded) {
+  // 최초 진입이거나, 마지막 조회 후 IND_STALE_MS가 지났으면 재조회
+  // (예전에는 indicatorsLoaded 가드 때문에 탭을 오가도 최초 1회 값이 그대로 남아 시세가 멈춰 보였음)
+  if (isInd && (!indicatorsLoaded || isIndicatorsStale())) {
     renderIndicators();
   }
+  syncIndAutoTimer();
+}
+
+// 주요 지표 데이터가 오래됐는지
+function isIndicatorsStale() {
+  return Date.now() - indicatorsFetchedAt > IND_STALE_MS;
 }
 
 // 시세 반영 버튼: 현재 뷰에 맞게
@@ -1718,6 +1729,27 @@ function refreshAll() {
   } else {
     refreshPrices();
   }
+}
+
+// 국내 장중 여부 (평일 09:00~15:40 KST). 사용자가 KST 환경이라는 전제.
+function isKrMarketOpen() {
+  const d = new Date();
+  const day = d.getDay();
+  if (day === 0 || day === 6) return false;
+  const mins = d.getHours() * 60 + d.getMinutes();
+  return mins >= 9 * 60 && mins <= 15 * 60 + 40;
+}
+
+// 장중에만 60초 주기 자동 갱신. 그 외에는 타이머를 걸지 않음.
+function syncIndAutoTimer() {
+  const want = (mainView === 'indicators') && !document.hidden;
+  if (indAutoTimer) { clearInterval(indAutoTimer); indAutoTimer = null; }
+  if (!want) return;
+  indAutoTimer = setInterval(() => {
+    if (mainView !== 'indicators' || document.hidden) return;
+    if (!isKrMarketOpen()) return;
+    renderIndicators(true, true);   // 깜빡임 없이 값만 교체
+  }, 60000);
 }
 
 // ── 주요 지표 현황 ─────────────────────────────────────────────
@@ -1979,11 +2011,28 @@ function judgeBollinger(p) {
   return { t: '중간', c: 'neu' };
 }
 
-async function renderIndicators(forceRefresh = false) {
-  indicatorsLoaded = true;
-  const root = document.getElementById('view-indicators');
+// 날짜 + 마지막 갱신 시각 표기. 값이 멈춰 있으면 여기 시각이 안 올라가므로 바로 알 수 있음.
+function updateIndDateBar() {
+  const hd = document.getElementById('ind-hero-date');
+  if (!hd) return;
+  const now = new Date();
+  const wd = ['일','월','화','수','목','금','토'][now.getDay()];
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  hd.innerHTML = `<span>📅 ${now.getMonth()+1}월 ${now.getDate()}일 (${wd})</span>`
+    + `<span class="dt-sub">갱신 ${hh}:${mm}</span>`;
+}
 
-  root.innerHTML = `
+// forceRefresh: 이미 그려진 화면을 다시 조회
+// silent: 껍데기를 다시 그리지 않고(=`불러오는 중…` 깜빡임 없이) 값만 제자리에서 교체.
+//         자동 갱신·앱 복귀 시 사용. 수동 '시세 반영'은 피드백을 위해 껍데기부터 다시 그림.
+async function renderIndicators(forceRefresh = false, silent = false) {
+  indicatorsLoaded = true;
+  indicatorsFetchedAt = Date.now();
+  const root = document.getElementById('view-indicators');
+  const canPatch = silent && !!root.querySelector('#ind-us');
+
+  if (!canPatch) root.innerHTML = `
     <div class="ind-datebar" id="ind-hero-date"></div>
     <div class="ind-panel">
       <div class="ind-card" id="ind-us">
@@ -2011,13 +2060,7 @@ async function renderIndicators(forceRefresh = false) {
       </div>
     </div>
   `;
-  // 날짜 표기
-  const hd = document.getElementById('ind-hero-date');
-  if (hd) {
-    const now = new Date();
-    const wd = ['일','월','화','수','목','금','토'][now.getDay()];
-    hd.innerHTML = `<span>📅 ${now.getMonth()+1}월 ${now.getDate()}일 (${wd})</span><span class="dt-sub">시장 지표 기준일</span>`;
-  }
+  updateIndDateBar();
 
   // 미국 증시 (스파크라인 포함, 컴팩트)
   Promise.all(MARKET_INDICES.map(idx =>
@@ -2206,7 +2249,9 @@ async function renderIndicators(forceRefresh = false) {
       `<div class="ind-issue">RSI 70↑ 과열 / 30↓ 과매도 · %B 100%↑ 상단돌파 / 0%↓ 하단이탈 · MACD 히스토그램 0↑ 골든크로스 / 0↓ 데드크로스 · 이격도 105↑ 과열 / 95↓ 과매도</div>`;
   });
 
-  renderIndicatorStocks();
+  // 조용한 갱신에서는 목록을 다시 그리지 않고(뉴스·블로그 탭 상태 유지) 시세만 교체
+  if (canPatch) refreshIndicatorStockPrices();
+  else renderIndicatorStocks();
 }
 
 // 위험지표 행 HTML (2줄 컴팩트: 이름|값 / 배지·그래프·부제)
@@ -2259,19 +2304,7 @@ function renderIndicatorStocks() {
       return;
     }
     // 시세
-    fetchPrice(s.code).catch(() => null).then(r => {
-      const el = document.getElementById(`ind-sp-${i}`);
-      if (!el) return;
-      if (!r || r.price == null) { el.innerHTML = `<span class="ind-sub">시세 없음</span>`; return; }
-      const chg = r.prev ? r.price - r.prev : 0;
-      const chgPct = r.prev ? (chg / r.prev * 100) : 0;
-      const isKRW = (r.currency === 'KRW' || s.code.includes('.K'));
-      const unit = isKRW ? '원' : '';
-      const chgAbs = Math.abs(chg);
-      const chgStr = isKRW ? Math.round(chgAbs).toLocaleString('ko-KR') : chgAbs.toLocaleString('en-US', {maximumFractionDigits: 2});
-      el.innerHTML = `<div class="ind-price">${r.price.toLocaleString('ko-KR')}${unit}</div>
-        <div class="ind-chg ${cls(chg)}" style="margin-top:2px">${chg>=0?'▲':'▼'} ${chgStr} (${fmtPct(chgPct)})</div>`;
-    });
+    fillIndStockPrice(i, s);
     // 미국주식: 7일 주가 그래프 / 국내주식: 외국인·기관 순매수 추이
     if (isUSStock(s)) {
       fetchHist(s.code).then(closes => renderStockMiniChart(i, closes, s));
@@ -2281,6 +2314,30 @@ function renderIndicatorStocks() {
     // 뉴스/공시
     fetchNews(s.code).then(res => renderStockNews(i, res));
   });
+}
+
+// 종목 카드의 시세 한 줄만 갱신
+function fillIndStockPrice(i, s) {
+  fetchPrice(s.code).catch(() => null).then(r => {
+    const el = document.getElementById(`ind-sp-${i}`);
+    if (!el) return;
+    if (!r || r.price == null) { el.innerHTML = `<span class="ind-sub">시세 없음</span>`; return; }
+    const chg = r.prev ? r.price - r.prev : 0;
+    const chgPct = r.prev ? (chg / r.prev * 100) : 0;
+    const isKRW = (r.currency === 'KRW' || s.code.includes('.K'));
+    const unit = isKRW ? '원' : '';
+    const chgAbs = Math.abs(chg);
+    const chgStr = isKRW ? Math.round(chgAbs).toLocaleString('ko-KR') : chgAbs.toLocaleString('en-US', {maximumFractionDigits: 2});
+    el.innerHTML = `<div class="ind-price">${r.price.toLocaleString('ko-KR')}${unit}</div>
+      <div class="ind-chg ${cls(chg)}" style="margin-top:2px">${chg>=0?'▲':'▼'} ${chgStr} (${fmtPct(chgPct)})</div>`;
+  });
+}
+
+// 조용한 갱신용: 목록은 그대로 두고 시세만 다시 불러옴
+function refreshIndicatorStockPrices() {
+  const list = data.indicatorStocks || [];
+  if (list.length === 0 || !document.getElementById('ind-sp-0')) { renderIndicatorStocks(); return; }
+  list.forEach((s, i) => { if (s.code) fillIndStockPrice(i, s); });
 }
 
 function renderStockTrend(i, trends) {
@@ -2756,6 +2813,19 @@ document.getElementById('lock-screen').classList.add('hidden');
 render();
 switchMainView('indicators');
 
+// 앱 복귀(백그라운드 → 포그라운드) 시 오래된 지표 자동 재조회.
+// PWA는 페이지가 살아있어서, 이게 없으면 어제 열어둔 화면의 값이 그대로 남는다.
+function onAppResume() {
+  if (document.hidden) { syncIndAutoTimer(); return; }
+  if (mainView === 'indicators' && indicatorsLoaded && isIndicatorsStale()) {
+    renderIndicators(true, true);   // 깜빡임 없이 값만 교체
+  }
+  syncIndAutoTimer();
+}
+document.addEventListener('visibilitychange', onAppResume);
+window.addEventListener('pageshow', onAppResume);
+window.addEventListener('focus', onAppResume);
+
 // 화면 당김 → 새로고침 (Pull to refresh)
 let touchStartY = 0;
 let pulling = false;
@@ -2772,7 +2842,7 @@ document.addEventListener('touchmove', (e) => {
   const delta = e.touches[0].clientY - touchStartY;
   if (delta > 70) {
     pulling = false;
-    refreshPrices();
+    refreshAll();   // 주요 지표 화면에서는 지표를, 내 주식 화면에서는 보유 시세를 갱신
   }
 }, {passive: true});
 
