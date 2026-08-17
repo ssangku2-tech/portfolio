@@ -365,6 +365,19 @@ body.ind-light .pos, #view-dividend .pos{color:#E5384E}
 .btn-danger:active{background:#FF4D6A33}
 .btn-ghost{flex:1;background:#1E2540;color:#8A93B8;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
 
+/* 새 버전 알림 바 (캐시된 구버전을 보고 있을 때 노출) */
+.update-bar{display:none;position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:250;
+  background:#2563EB;color:#fff;padding:9px 12px calc(9px + env(safe-area-inset-top,0));align-items:center;gap:9px;
+  box-shadow:0 3px 14px rgba(37,99,235,.35);font-size:12.5px;font-weight:700}
+.update-bar.open{display:flex}
+/* 바가 뜬 동안 헤더가 가려지지 않게 본문을 아래로 미는 여백은
+   글자 크기·safe-area에 따라 높이가 달라지므로 JS에서 실측해 넣는다 */
+.ub-text{flex:1;min-width:0;line-height:1.4}
+.ub-text b{font-weight:800}
+.ub-btn{background:#fff;color:#2563EB;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0}
+.ub-btn:active{background:#E8EFFD}
+.ub-close{background:none;border:none;color:rgba(255,255,255,.8);font-size:16px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0}
+
 /* Toast */
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#2A3360;color:#EDF0FF;padding:10px 20px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .3s;z-index:300;white-space:nowrap}
 .toast.show{opacity:1}
@@ -492,9 +505,16 @@ body.ind-light .pos, #view-dividend .pos{color:#E5384E}
   <button class="lock-cancel" id="lock-cancel" onclick="cancelLock()">← 주요 지표로 돌아가기</button>
 </div>
 
+<!-- 새 버전 알림 바 -->
+<div class="update-bar" id="update-bar">
+  <span class="ub-text">새 버전 <b id="ub-ver"></b>이 배포되었습니다</span>
+  <button class="ub-btn" onclick="applyUpdate()">새로고침</button>
+  <button class="ub-close" onclick="dismissUpdate()" title="닫기">✕</button>
+</div>
+
 <div class="header">
   <div class="header-top">
-    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.21</span>
+    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.22</span>
     <div class="header-btns">
       <button class="icon-btn" onclick="toggleMenu()" title="메뉴">⋮</button>
       <button class="refresh-btn" onclick="refreshAll()">
@@ -3722,16 +3742,65 @@ function changePin() {
   initLock();
 }
 
+// ── 새 버전 감지 (캐시 우회) ──────────────────────────────────
+// GitHub Pages가 index.html에 Cache-Control: max-age=600을 붙이기 때문에, 배포 후에도
+// 폰이 최대 10분(홈 화면 PWA는 더 길게) 구버전을 계속 보여준다. 서비스 워커는 별도
+// 파일이 필요해 단일 파일 구조를 깨므로, 페이지가 스스로 서버의 app-ver를 읽어
+// 자기 버전과 다르면 알림 바를 띄우는 방식으로 처리한다.
+// 실행 중인 버전은 헤더 span에서 그대로 읽는다 → 버전 문자열은 여전히 한 곳에만 존재.
+const APP_VER = (document.querySelector('.app-ver').textContent || '').trim();
+const UPDATE_CHECK_MS = 5 * 60 * 1000;   // 과도한 재조회 방지
+let lastUpdateCheck = 0;
+let latestVer = null;
+let dismissedVer = null;
+
+async function checkForUpdate(force = false) {
+  if (!APP_VER) return;
+  if (!force && Date.now() - lastUpdateCheck < UPDATE_CHECK_MS) return;
+  lastUpdateCheck = Date.now();
+  try {
+    // no-store + 매번 다른 쿼리 = HTTP 캐시를 확실히 우회
+    const r = await fetch(location.pathname + '?_cb=' + Date.now(), {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!r.ok) return;
+    const m = (await r.text()).match(/class="app-ver">\s*([^<]+?)\s*</);
+    if (!m) return;
+    const server = m[1];
+    if (server === APP_VER || server === dismissedVer) return;
+    latestVer = server;
+    document.getElementById('ub-ver').textContent = server;
+    const bar = document.getElementById('update-bar');
+    bar.classList.add('open');
+    document.body.style.paddingTop = bar.offsetHeight + 'px';   // 실측 높이만큼 본문을 내림
+  } catch(e) {}   // 오프라인·file:// 등에서는 조용히 무시
+}
+
+// 한 번도 캐시된 적 없는 URL(?v=버전)로 이동해 캐시 항목 자체를 갈아끼운다
+function applyUpdate() {
+  location.replace(location.pathname + '?v=' + encodeURIComponent(latestVer || Date.now()));
+}
+function dismissUpdate() {
+  dismissedVer = latestVer;   // 이번 세션에서는 같은 버전으로 다시 알리지 않음
+  document.getElementById('update-bar').classList.remove('open');
+  document.body.style.paddingTop = '';
+}
+
 // ── Init ──────────────────────────────────────────────────────
 // 시작은 주요 지표 화면(잠금 없음). 내 주식 탭을 눌러야 비밀번호 확인.
 document.getElementById('lock-screen').classList.add('hidden');
 render();
 switchMainView('indicators');
 
+// 첫 진입 시 새 버전 확인 (시세 조회와 겹치지 않게 잠시 뒤에)
+setTimeout(() => checkForUpdate(true), 3000);
+
 // 앱 복귀(백그라운드 → 포그라운드) 시 오래된 지표 자동 재조회.
 // PWA는 페이지가 살아있어서, 이게 없으면 어제 열어둔 화면의 값이 그대로 남는다.
 function onAppResume() {
   if (document.hidden) { syncIndAutoTimer(); return; }
+  checkForUpdate();   // 앱으로 돌아올 때마다 새 버전 확인 (5분 스로틀)
   if (mainView === 'indicators' && indicatorsLoaded && isIndicatorsStale()) {
     renderIndicators(true, true);   // 깜빡임 없이 값만 교체
   }
