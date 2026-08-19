@@ -131,7 +131,8 @@ body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0))}
 body.ind-light{background:#EDF1F7}
 body.ind-light .header{background:#FFFFFF;border-bottom:1px solid #E4E9F2}
 body.ind-light .app-title{color:#1A1F2E}
-body.ind-light .icon-btn{color:#5A6480}
+body.ind-light .icon-btn{background:#F0F3F9;color:#5A6480}
+body.ind-light .icon-btn:active{background:#E4E9F2}
 body.ind-light .refresh-btn{background:#FFF1E3;color:#E5780F;border:1px solid #FFD9B5}
 body.ind-light .bottom-nav{background:rgba(255,255,255,0.97);border-top:1px solid #E4E9F2}
 body.ind-light .bottom-nav-item{color:#A0A8BA}
@@ -516,7 +517,7 @@ body.ind-light .pos, #view-dividend .pos{color:#E5384E}
 
 <div class="header">
   <div class="header-top">
-    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.23</span>
+    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.24</span>
     <div class="header-btns">
       <button class="icon-btn" onclick="toggleMenu()" title="메뉴">⋮</button>
       <button class="refresh-btn" onclick="refreshAll()">
