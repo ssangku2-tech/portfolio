@@ -313,7 +313,9 @@ body.ind-light .pos, #view-dividend .pos{color:#E5384E}
 .dv-row-name{font-size:13px;font-weight:800;color:#1F2533;letter-spacing:-0.2px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dv-row-code{font-size:10px;font-weight:600;color:#A5ADBD;flex-shrink:0}
 .dv-row-yield{margin-left:auto;font-size:13px;font-weight:800;color:#E5780F;flex-shrink:0;font-variant-numeric:tabular-nums}
-.dv-row-mid{display:flex;gap:10px;margin-top:4px;font-size:10.5px;color:#8A93B8;font-weight:600;flex-wrap:wrap}
+.dv-row-mid{display:flex;gap:8px;margin-top:4px;font-size:10px;color:#8A93B8;font-weight:600;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.dv-row-mid::-webkit-scrollbar{display:none}
+.dv-row-mid span{flex-shrink:0;white-space:nowrap}
 .dv-row-mid b{color:#3A4254;font-weight:700;font-variant-numeric:tabular-nums}
 .dv-row-bot{display:flex;align-items:center;gap:5px;margin-top:5px;flex-wrap:wrap}
 .dv-mon{font-size:9px;font-weight:700;color:#A5ADBD;background:#F2F4F9;border-radius:4px;padding:1.5px 5px;line-height:1.4}
@@ -514,7 +516,7 @@ body.ind-light .pos, #view-dividend .pos{color:#E5384E}
 
 <div class="header">
   <div class="header-top">
-    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.22</span>
+    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.23</span>
     <div class="header-btns">
       <button class="icon-btn" onclick="toggleMenu()" title="메뉴">⋮</button>
       <button class="refresh-btn" onclick="refreshAll()">
@@ -3121,8 +3123,10 @@ function renderDivHoldings() {
           const monBadges = [1,2,3,4,5,6,7,8,9,10,11,12]
             .filter(m => (h.months||[]).includes(m))
             .map(m => `<span class="dv-mon${m === new Date().getMonth()+1 ? ' hit' : ''}">${m}월</span>`).join('');
-          const chg = (h.currentPrice && h.prevClose) ? (h.currentPrice - h.prevClose) / h.prevClose * 100 : null;
           const unit = h.currency === 'USD' ? '$' : '';
+          const costVal = dvCostValue(h);
+          const mktVal = dvMarketValue(h);
+          const ret = costVal > 0 ? (mktVal - costVal) / costVal * 100 : null;
           return `<div class="dv-row" onclick="openDvStockModal('${h.id}')">
             <div class="dv-row-top">
               <span class="dv-row-name">${esc(h.name)}</span>
@@ -3132,8 +3136,9 @@ function renderDivHoldings() {
             <div class="dv-row-mid">
               <span>수량 <b>${dvNum(h.qty)}</b></span>
               <span>매입 <b>${unit}${dvNum(h.avgPrice)}</b></span>
-              <span>현재 <b>${h.currentPrice ? unit + dvNum(h.currentPrice) : '-'}</b>${chg !== null ? ` <b class="${cls(chg)}">${fmtPct(chg)}</b>` : ''}</span>
-              <span>평가 <b>${fmtPlain(dvMarketValue(h))}</b></span>
+              <span>현재 <b>${h.currentPrice ? unit + dvNum(h.currentPrice) : '-'}</b></span>
+              <span>수익률 <b class="${ret !== null ? cls(ret) : 'neu'}">${ret !== null ? fmtPct(ret) : '-'}</b></span>
+              <span>평가 <b>${fmtPlain(mktVal)}</b></span>
               <span>YOC <b>${dvYieldOnCost(h).toFixed(2)}%</b></span>
             </div>
             <div class="dv-row-bot">
