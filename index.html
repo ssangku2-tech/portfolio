@@ -214,6 +214,18 @@ body.ind-light .menu-item{color:#2A3142}
 .news-item{font-size:12.5px;margin-top:6px}
 .news-item a{color:#1D4FD8;font-weight:400}
 .ind-placeholder{font-size:11.5px;color:#A5ADBD;line-height:1.5;padding:4px 0}
+/* 그룹별 자동 요약 (추가 API 호출 없이 화면 값만으로 계산) */
+.ind-summary{margin:0 0 9px;padding:8px 10px;border-radius:10px;border:1px solid}
+.ind-summary .sm-head{font-size:12px;font-weight:800;letter-spacing:-0.2px;margin-bottom:3px}
+.ind-summary .sm-body{font-size:11.5px;line-height:1.55;color:#5A6480}
+.ind-summary.up{background:#FEF3F4;border-color:#F8DDE1}
+.ind-summary.up .sm-head{color:#D22C43}
+.ind-summary.down{background:#EFF4FE;border-color:#DAE4F8}
+.ind-summary.down .sm-head{color:#1F6FEB}
+.ind-summary.warn{background:#FFF7EE;border-color:#F7E2CB}
+.ind-summary.warn .sm-head{color:#C9741C}
+.ind-summary.neu{background:#F5F7FA;border-color:#E7ECF3}
+.ind-summary.neu .sm-head{color:#4A5468}
 
 /* 라이트 테마 등락 색상 (한국식: 상승 빨강 / 하락 파랑) */
 body.ind-light .pos, #view-indicators .pos{color:#E5384E}
@@ -517,7 +529,7 @@ body.ind-light .pos, #view-dividend .pos{color:#E5384E}
 
 <div class="header">
   <div class="header-top">
-    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.24</span>
+    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.25</span>
     <div class="header-btns">
       <button class="icon-btn" onclick="toggleMenu()" title="메뉴">⋮</button>
       <button class="refresh-btn" onclick="refreshAll()">
@@ -2337,6 +2349,142 @@ function judgeBollinger(p) {
   return { t: '중간', c: 'neu' };
 }
 
+// ── 그룹별 자동 요약 ──────────────────────────────────────────
+// 원칙: 추가 네트워크 호출 없음. 각 카드가 이미 받아온 값만 가지고 규칙 기반으로 문장을 만든다.
+function summaryBox(tone, head, body) {
+  return `<div class="ind-summary ${tone}"><div class="sm-head">${head}</div><div class="sm-body">${body}</div></div>`;
+}
+const pctStr = v => (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+
+// 미국 증시: 등락 폭·방향 일치도·기술주 vs 우량주 상대강도·5거래일 흐름
+function summarizeUS(results) {
+  const items = MARKET_INDICES.map((idx, i) => {
+    const [r, hist] = results[i] || [];
+    if (!r || r.price == null || !r.prev) return null;
+    return { name: idx.name, pct: (r.price - r.prev) / r.prev * 100, hist: hist || [] };
+  }).filter(Boolean);
+  if (!items.length) return '';
+  const avg = items.reduce((a, b) => a + b.pct, 0) / items.length;
+  const up = items.filter(x => x.pct > 0).length;
+  let head, tone;
+  if (up === items.length) { head = avg >= 0.7 ? '📈 동반 강세' : '📈 동반 상승'; tone = 'up'; }
+  else if (up === 0) { head = avg <= -0.7 ? '📉 동반 급락' : '📉 동반 하락'; tone = 'down'; }
+  else if (Math.abs(avg) < 0.15) { head = '➖ 보합·혼조'; tone = 'neu'; }
+  else { head = avg > 0 ? '📈 혼조 속 강세' : '📉 혼조 속 약세'; tone = avg > 0 ? 'up' : 'down'; }
+  const detail = items.map(x => `${x.name} ${pctStr(x.pct)}`).join(' · ');
+  const nas = items.find(x => x.name === '나스닥'), dow = items.find(x => x.name === '다우존스');
+  let lead = '';
+  if (nas && dow) {
+    const d = nas.pct - dow.pct;
+    if (d >= 0.4) lead = ' 기술주가 우량주보다 앞서 위험선호가 살아 있는 흐름입니다.';
+    else if (d <= -0.4) lead = ' 기술주보다 우량·경기주가 앞서 방어적인 흐름입니다.';
+    else lead = ' 업종 간 온도차는 크지 않습니다.';
+  }
+  const sp = items[0];
+  let wk = '';
+  if (sp && sp.hist.length >= 6) {
+    const w = (sp.hist[sp.hist.length - 1] / sp.hist[sp.hist.length - 6] - 1) * 100;
+    wk = ` 최근 5거래일 ${sp.name} ${pctStr(w)}.`;
+  }
+  return summaryBox(tone, head, `${detail}.${lead}${wk}`);
+}
+
+// 환율·유가: 환율 레벨/방향 + 유가 레벨/방향 + 둘의 조합이 물가·보유 미국주식에 주는 의미
+function summarizeFxOil(fx, oil) {
+  const fxPct = (fx && fx.price && fx.prev) ? (fx.price - fx.prev) / fx.prev * 100 : null;
+  const oilPct = (oil && oil.price && oil.prev) ? (oil.price - oil.prev) / oil.prev * 100 : null;
+  if ((!fx || fx.price == null) && (!oil || oil.price == null)) return '';
+  const parts = [], notes = [];
+  let head = '➖ 특이 신호 없음', tone = 'neu';
+
+  if (fx && fx.price != null) {
+    const lvl = fx.price >= 1400 ? '고환율 부담 구간'
+      : fx.price >= 1330 ? '다소 높은 수준'
+      : fx.price <= 1250 ? '안정 구간' : '보통 수준';
+    const dir = fxPct == null ? '' : (fxPct > 0.3 ? `원화 약세 ${pctStr(fxPct)}` : fxPct < -0.3 ? `원화 강세 ${pctStr(fxPct)}` : `보합 ${pctStr(fxPct)}`);
+    parts.push(`환율 ${fmtNum(fx.price, 1)}원 (${lvl})${dir ? ` · 전일 대비 ${dir}` : ''}`);
+    if (fx.price >= 1400) { head = '⚠️ 고환율 부담'; tone = 'warn'; }
+    else if (fxPct != null && fxPct > 0.5) { head = '⚠️ 원화 약세 확대'; tone = 'warn'; }
+    else if (fxPct != null && fxPct < -0.5) { head = '🙂 원화 강세 전환'; tone = 'neu'; }
+    else { head = '➖ 환율 안정적'; tone = 'neu'; }
+    if (fxPct != null && fxPct > 0.3) notes.push('원화 약세는 보유 미국주식의 원화 환산 평가액에는 유리하게 작용합니다');
+    else if (fxPct != null && fxPct < -0.3) notes.push('원화 강세로 미국주식의 원화 환산 평가액은 다소 줄어듭니다');
+  }
+
+  if (oil && oil.price != null) {
+    const olvl = oil.price >= 90 ? '고유가·물가 압력'
+      : oil.price >= 75 ? '보통 수준'
+      : oil.price <= 60 ? '저유가·수요 둔화 신호' : '안정 수준';
+    const odir = oilPct == null ? '' : (oilPct > 1 ? `급등 ${pctStr(oilPct)}` : oilPct < -1 ? `급락 ${pctStr(oilPct)}` : `${pctStr(oilPct)}`);
+    parts.push(`WTI $${fmtNum(oil.price, 2)} (${olvl})${odir ? ` · 전일 ${odir}` : ''}`);
+  }
+
+  if (fxPct != null && oilPct != null) {
+    if (fxPct > 0.3 && oilPct > 1) { head = '⚠️ 수입물가 압력 조합'; tone = 'warn'; notes.push('환율과 유가가 함께 올라 수입물가·기업 원가 부담이 커지는 조합입니다'); }
+    else if (fxPct < -0.3 && oilPct < -1) notes.push('환율·유가가 함께 내려 물가 측면에서는 우호적인 조합입니다');
+  }
+  return summaryBox(tone, head, parts.join(' · ') + '.' + (notes.length ? ' ' + notes.join('. ') + '.' : ''));
+}
+
+// 선행·위험 지표: 각 지표의 판정 등급을 점수화해 전체 위험 온도를 요약
+const RISK_SKIP = ['미 국채 10년물', '미 국채 2년물'];   // 금리 방향 표시일 뿐 위험 등급이 아님
+function summarizeRisk(sig) {
+  const scored = (sig || []).filter(x => x.j && x.j.c && RISK_SKIP.indexOf(x.name) === -1);
+  if (!scored.length) return '';
+  const w = { neg: 2, warn: 1, neu: 0.5, pos: 0, neg2: 0 };
+  const score = scored.reduce((a, x) => a + (w[x.j.c] != null ? w[x.j.c] : 0), 0);
+  const ratio = score / (scored.length * 2);
+  const alerts = scored.filter(x => x.j.c === 'neg');
+  const cautions = scored.filter(x => x.j.c === 'warn');
+  const calm = scored.filter(x => x.j.c === 'pos').length;
+  let head, tone;
+  if (ratio >= 0.5 || alerts.length >= 3) { head = '🔴 위험 경계'; tone = 'warn'; }
+  else if (ratio >= 0.28 || alerts.length >= 1) { head = '🟠 부분적 경계'; tone = 'warn'; }
+  else if (ratio >= 0.12) { head = '🟡 대체로 안정'; tone = 'neu'; }
+  else { head = '🟢 위험 신호 낮음'; tone = 'neu'; }
+  const bits = [];
+  const listOf = arr => arr.slice(0, 4).map(x => `${x.name}(${x.j.t})`).join(', ') + (arr.length > 4 ? ` 외 ${arr.length - 4}개` : '');
+  if (alerts.length) bits.push(`경보 ${listOf(alerts)}`);
+  if (cautions.length) bits.push(`주의 ${listOf(cautions)}`);
+  bits.push(`정상 범위 ${calm}/${scored.length}개`);
+  const has = (name, txt) => scored.some(x => x.name === name && x.j.t === txt);
+  const inverted = has('장단기 금리차', '역전') || has('3개월-10년 금리차', '역전');
+  const credit = has('하이일드 스프레드', '확대') || has('투자등급 신용스프레드', '확대');
+  let note;
+  if (inverted && credit) note = '금리 역전과 신용 스프레드 확대가 함께 나타나 경기 둔화 가능성을 무겁게 볼 구간입니다.';
+  else if (credit) note = '신용 스프레드가 벌어지고 있어 위험자산 비중은 보수적으로 보는 편이 낫습니다.';
+  else if (inverted) note = '금리 역전은 통상 1~2년 시차를 두는 선행 신호라 즉각적인 위험으로 보기엔 이릅니다.';
+  else if (has('VIX 공포지수', '안일')) note = '변동성이 지나치게 낮아 시장이 위험을 과소평가하는 국면일 수 있습니다.';
+  else if (!alerts.length && !cautions.length) note = '크레딧·변동성 모두 안정적이라 급격한 위험 확대 조짐은 보이지 않습니다.';
+  else note = '일부 지표만 경계 신호라 아직 시장 전반의 위험 확산으로 보긴 어렵습니다.';
+  return summaryBox(tone, head, bits.join(' · ') + '. ' + note);
+}
+
+// 기술적 지표: RSI·볼린저 %B·이격도를 합산해 지수별 과열/과매도, MACD로 추세 방향
+function summarizeTech(list) {
+  const items = (list || []).filter(x => x.rsi != null);
+  if (!items.length) return '';
+  const descs = items.map(x => {
+    let sc = 0;
+    sc += x.rsi >= 70 ? 2 : x.rsi >= 60 ? 1 : x.rsi <= 30 ? -2 : x.rsi <= 40 ? -1 : 0;
+    if (x.pctB != null) sc += x.pctB > 1 ? 2 : x.pctB >= 0.8 ? 1 : x.pctB < 0 ? -2 : x.pctB <= 0.2 ? -1 : 0;
+    if (x.disp != null) sc += x.disp >= 105 ? 2 : x.disp >= 102 ? 1 : x.disp <= 95 ? -2 : x.disp <= 98 ? -1 : 0;
+    const state = sc >= 4 ? '과열권' : sc >= 2 ? '상단권' : sc <= -4 ? '과매도권' : sc <= -2 ? '하단권' : '중립';
+    let trend = '';
+    if (x.macd) trend = x.macd.hist > 0 ? (x.macd.macd > 0 ? '상승추세' : '반등시도') : (x.macd.macd < 0 ? '하락추세' : '상승둔화');
+    x.state = state;
+    return `${x.name} ${state}${trend ? '·' + trend : ''}(RSI ${x.rsi.toFixed(0)})`;
+  });
+  const hot = items.filter(x => x.state === '과열권').length;
+  const cold = items.filter(x => x.state === '과매도권').length;
+  let head, tone, note;
+  if (hot && cold) { head = '↔️ 지수별 온도차'; tone = 'neu'; note = '지수마다 과열·과매도가 엇갈려 일괄 대응보다 지수별로 나눠 보는 편이 낫습니다.'; }
+  else if (hot) { head = '🔥 과열 구간'; tone = 'up'; note = '단기 추격 매수보다는 분할 접근·차익 실현을 함께 고려할 구간입니다.'; }
+  else if (cold) { head = '🧊 과매도 구간'; tone = 'down'; note = '낙폭 과대 구간이라 반등 가능성과 추세 훼손 여부를 함께 봐야 합니다.'; }
+  else { head = '➖ 대체로 중립'; tone = 'neu'; note = '과열·과매도 신호가 뚜렷하지 않아 추세 판단은 MACD 방향에 무게를 두는 편이 낫습니다.'; }
+  return summaryBox(tone, head, descs.join(' · ') + '. ' + note);
+}
+
 // 날짜 + 마지막 갱신 시각 표기. 값이 멈춰 있으면 여기 시각이 안 올라가므로 바로 알 수 있음.
 function updateIndDateBar() {
   const hd = document.getElementById('ind-hero-date');
@@ -2410,7 +2558,7 @@ async function renderIndicators(forceRefresh = false, silent = false) {
       </div>`;
     }).join('');
     document.getElementById('ind-us').innerHTML =
-      `<div class="ind-card-title"><span class="ttl">미국 증시 <span class="ind-tag">전일</span></span></div>${rows}`;
+      `<div class="ind-card-title"><span class="ttl">미국 증시 <span class="ind-tag">전일</span></span></div>${summarizeUS(results)}${rows}`;
   });
 
   // 환율 · 유가 (통합)
@@ -2438,6 +2586,7 @@ async function renderIndicators(forceRefresh = false, silent = false) {
       </div>`;
     };
     el.innerHTML = `<div class="ind-card-title"><span class="ttl">환율 · 유가</span></div>`
+      + summarizeFxOil(fx, oil)
       + mkRow('USD / KRW', '원·달러', fx, fxH, v => fmtNum(v,1)+'원')
       + mkRow('WTI 원유', 'USD/배럴', oil, oilH, v => '$'+fmtNum(v,2));
   });
@@ -2454,6 +2603,8 @@ async function renderIndicators(forceRefresh = false, silent = false) {
   ]).then(([yc, hy, vix, dxy, vixH, dxyH, ksH, y10, y2, t3m, ig, move, moveH]) => {
     const el = document.getElementById('ind-risk');
     const rows = [];
+    const sig = [];   // 그룹 요약용: {지표명, 판정}
+    const addRisk = (name, sub, value, spark, judge) => { rows.push(riskRow(name, sub, value, spark, judge)); sig.push({ name, j: judge }); };
     const yieldJudge = (r) => {
       const chg = (r && r.prev != null) ? r.value - r.prev : 0;
       return { t: `전일 ${chg>=0?'▲':'▼'} ${Math.abs(chg).toFixed(2)}%p`, c: chg>0?'neg':(chg<0?'neg2':'neu') };
@@ -2466,59 +2617,60 @@ async function renderIndicators(forceRefresh = false, silent = false) {
       const len = Math.min(h10.length, h2.length);
       const sh = [];
       for (let i = 0; i < len; i++) sh.push(h10[h10.length - len + i] - h2[h2.length - len + i]);
-      rows.push(riskRow('장단기 금리차', '미 국채 10년-2년', spread.toFixed(2)+'%p', sparkline(sh.slice(-15)), j));
+      addRisk('장단기 금리차', '미 국채 10년-2년', spread.toFixed(2)+'%p', sparkline(sh.slice(-15)), j);
     } else if (yc && yc.value != null) {
       const j = judgeYieldSpread(yc.value);
-      rows.push(riskRow('장단기 금리차', '미 국채 10년-2년', yc.value.toFixed(2)+'%p', sparkline((yc.history||[]).slice(-15)), j));
+      addRisk('장단기 금리차', '미 국채 10년-2년', yc.value.toFixed(2)+'%p', sparkline((yc.history||[]).slice(-15)), j);
     }
     // 3개월-10년 금리차 (NY 연준이 침체 예측에 더 신뢰하는 스프레드)
     if (t3m && t3m.value != null) {
       const j = judgeYieldSpread(t3m.value);
-      rows.push(riskRow('3개월-10년 금리차', '미 국채 10년-3개월', t3m.value.toFixed(2)+'%p', sparkline((t3m.history||[]).slice(-15)), j));
+      addRisk('3개월-10년 금리차', '미 국채 10년-3개월', t3m.value.toFixed(2)+'%p', sparkline((t3m.history||[]).slice(-15)), j);
     }
     // 미 국채 10년물
     if (y10 && y10.value != null) {
-      rows.push(riskRow('미 국채 10년물', '10Y 금리', y10.value.toFixed(2)+'%', sparkline((y10.history||[]).slice(-15)), yieldJudge(y10)));
+      addRisk('미 국채 10년물', '10Y 금리', y10.value.toFixed(2)+'%', sparkline((y10.history||[]).slice(-15)), yieldJudge(y10));
     }
     // 미 국채 2년물
     if (y2 && y2.value != null) {
-      rows.push(riskRow('미 국채 2년물', '2Y 금리', y2.value.toFixed(2)+'%', sparkline((y2.history||[]).slice(-15)), yieldJudge(y2)));
+      addRisk('미 국채 2년물', '2Y 금리', y2.value.toFixed(2)+'%', sparkline((y2.history||[]).slice(-15)), yieldJudge(y2));
     }
     // 하이일드 스프레드
     if (hy && hy.value != null) {
       const j = judgeHYSpread(hy.value);
-      rows.push(riskRow('하이일드 스프레드', '부실채권 위험도', hy.value.toFixed(2)+'%p', sparkline((hy.history||[]).slice(-15)), j));
+      addRisk('하이일드 스프레드', '부실채권 위험도', hy.value.toFixed(2)+'%p', sparkline((hy.history||[]).slice(-15)), j);
     }
     // 투자등급 신용스프레드 (하이일드와 함께 신용시장 전반 파악)
     if (ig && ig.value != null) {
       const j = judgeIGSpread(ig.value);
-      rows.push(riskRow('투자등급 신용스프레드', 'IG 회사채 위험도', ig.value.toFixed(2)+'%p', sparkline((ig.history||[]).slice(-15)), j));
+      addRisk('투자등급 신용스프레드', 'IG 회사채 위험도', ig.value.toFixed(2)+'%p', sparkline((ig.history||[]).slice(-15)), j);
     }
     // VIX
     if (vix && vix.price != null) {
       const j = judgeVIX(vix.price);
-      rows.push(riskRow('VIX 공포지수', 'S&P500 변동성', fmtNum(vix.price,1), sparkline((vixH||[]).slice(-15)), j));
+      addRisk('VIX 공포지수', 'S&P500 변동성', fmtNum(vix.price,1), sparkline((vixH||[]).slice(-15)), j);
     }
     // MOVE 지수 (채권시장 변동성 - VIX의 채권 버전)
     if (move && move.price != null) {
       const j = judgeMOVE(move.price);
-      rows.push(riskRow('MOVE 지수', '미 국채 변동성', fmtNum(move.price,1), sparkline((moveH||[]).slice(-15)), j));
+      addRisk('MOVE 지수', '미 국채 변동성', fmtNum(move.price,1), sparkline((moveH||[]).slice(-15)), j);
     }
     // 코스피 변동성 (실현변동성 근사 - VKOSPI 대용)
     if (ksH && ksH.length > 22) {
       const rv = calcRealizedVol(ksH, 20);
       if (rv != null) {
         const j = judgeKrVol(rv);
-        rows.push(riskRow('코스피 변동성', '20일 실현변동성·근사', fmtNum(rv,1), sparkline(realizedVolSeries(ksH,20,15)), j));
+        addRisk('코스피 변동성', '20일 실현변동성·근사', fmtNum(rv,1), sparkline(realizedVolSeries(ksH,20,15)), j);
       }
     }
     // 달러인덱스
     if (dxy && dxy.price != null) {
       const chg = dxy.prev ? dxy.price - dxy.prev : 0;
       const j = { t: chg>0?'강세':'약세', c: chg>0?'warn':'pos' };
-      rows.push(riskRow('달러 인덱스', 'DXY', fmtNum(dxy.price,2), sparkline((dxyH||[]).slice(-15)), j));
+      addRisk('달러 인덱스', 'DXY', fmtNum(dxy.price,2), sparkline((dxyH||[]).slice(-15)), j);
     }
     el.innerHTML = `<div class="ind-card-title"><span class="ttl">선행·위험 지표</span></div>` +
+      (rows.length ? summarizeRisk(sig) : '') +
       (rows.length ? rows.join('') : '<div class="ind-placeholder">데이터를 불러오지 못했습니다</div>') +
       (rows.length ? `<div class="ind-issue">${(yc&&yc.date)?`📅 금리·스프레드 기준일: ${yc.date} · `:''}※ 코스피 변동성은 종가 기반 실현변동성으로 산출한 <b>근사치</b>입니다 (실제 VKOSPI와 다소 차이날 수 있음)</div>` : '');
   });
@@ -2527,6 +2679,7 @@ async function renderIndicators(forceRefresh = false, silent = false) {
   Promise.all([fetchHist('^GSPC').catch(()=>null), fetchHist('^KS11').catch(()=>null), fetchHist('^KQ11').catch(()=>null)]).then(([sp, ks, kq]) => {
     const el = document.getElementById('ind-tech');
     const rows = [];
+    const techList = [];   // 그룹 요약용: 지수별 RSI·%B·MACD·이격도
     [['S&P 500', sp], ['코스피', ks], ['코스닥', kq]].forEach(([name, closes]) => {
       if (!closes || closes.length < 15) return;
       const rsi = calcRSI(closes);
@@ -2568,9 +2721,11 @@ async function renderIndicators(forceRefresh = false, silent = false) {
           <span class="ind2-val" style="font-size:13px">${disp.toFixed(1)}</span>
         </div>`);
       }
+      techList.push({ name, rsi, pctB: boll ? boll.pctB : null, macd, disp });
       rows.push(`</div>`);
     });
     el.innerHTML = `<div class="ind-card-title"><span class="ttl">기술적 지표 (과매수·과매도)</span></div>` +
+      (rows.length ? summarizeTech(techList) : '') +
       (rows.length ? rows.join('') : '<div class="ind-placeholder">데이터를 불러오지 못했습니다</div>') +
       `<div class="ind-issue">RSI 70↑ 과열 / 30↓ 과매도 · %B 100%↑ 상단돌파 / 0%↓ 하단이탈 · MACD 히스토그램 0↑ 골든크로스 / 0↓ 데드크로스 · 이격도 105↑ 과열 / 95↓ 과매도</div>`;
   });
