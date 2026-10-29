@@ -529,7 +529,7 @@ body.ind-light .pos, #view-dividend .pos{color:#E5384E}
 
 <div class="header">
   <div class="header-top">
-    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.25</span>
+    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.27</span>
     <div class="header-btns">
       <button class="icon-btn" onclick="toggleMenu()" title="메뉴">⋮</button>
       <button class="refresh-btn" onclick="refreshAll()">
@@ -861,6 +861,11 @@ function load() {
       });
       if (!stored.watchlist) stored.watchlist = [];
       if (!Array.isArray(stored.history)) stored.history = [];
+      // 90일 제한으로 잘려나간 6/2 최고 기록 복구 (총액만, 구성은 ensureBreakdown 추정)
+      if (!stored.history.some(h => h.date === '2026-06-02')) {
+        stored.history.push({ date: '2026-06-02', total: 2900000000 });
+        stored.history.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+      }
 
       // 자산 마이그레이션: 기존 pensionAsset/otherAsset → customAssets
       if (!Array.isArray(stored.customAssets)) {
@@ -942,9 +947,7 @@ function recordHistorySnapshot(snap) {
   } else {
     data.history.push(record);
   }
-  if (data.history.length > 90) {
-    data.history = data.history.slice(-90);
-  }
+  // 전체 기간 보존 (개수 제한 없음 — 하루 1건이라 용량 부담 적음)
   save();
 }
 
@@ -1494,7 +1497,7 @@ function renderHistoryChart() {
     return { date: h.date, m1, m2, assetSum, total };
   };
 
-  // 전체 이력(최고·최저 기록용) + 표시용 최근 15일
+  // 전체 이력 전부 표시 (최고·최저도 전체 기간 기준)
   const full = ensureBreakdown(data.history || []).map(adj);
   if (full.length < 2) {
     return `<div class="history-chart">
@@ -1502,11 +1505,11 @@ function renderHistoryChart() {
       <div class="chart-empty">데이터를 모으는 중입니다<br>매일 앱을 열면 추이가 쌓입니다</div>
     </div>`;
   }
-  const series = full.slice(-15);
+  const series = full;
   const n = series.length;
-  const visStart = full.length - n;
+  const visStart = 0;
 
-  // 전체 기간 최고·최저 (15일 지나도 유지)
+  // 전체 기간 최고·최저
   let maxFi = 0, minFi = 0;
   full.forEach((s, i) => { if (s.total > full[maxFi].total) maxFi = i; if (s.total < full[minFi].total) minFi = i; });
   const lastFi = full.length - 1;
@@ -1584,7 +1587,7 @@ function renderHistoryChart() {
 
   return `<div class="history-chart">
     <div class="chart-title">
-      <span>📊 변동 추이 (${n}일) <span class="area-unit">단위: 억원</span></span>
+      <span>📊 변동 추이 (전체 ${n}일) <span class="area-unit">단위: 억원</span></span>
       <span class="chart-chg ${cls(chg)}">${fmtEok(chg, true)} (${fmtPct(chgPct)})</span>
     </div>
     <div class="area-latest">${fmtEok(last)} <span class="area-latest-sub">현재 총자산</span></div>
@@ -1594,7 +1597,7 @@ function renderHistoryChart() {
     </div>
     <div class="area-xdates">${xdates}</div>
     <div class="area-legend">${legend}</div>
-    <div class="area-note">최고·최저는 전체 기간 기록 (←는 15일 이전)</div>
+    <div class="area-note">${series[0].date.replace(/-/g, '/')}부터 전체 기간 · 최고·최저는 전체 기록</div>
   </div>`;
 }
 
@@ -1956,6 +1959,10 @@ function importData(event) {
         delete imported.otherAsset;
       }
       if (!Array.isArray(imported.history)) imported.history = [];
+      // 백업에 없는 날짜의 현재 이력은 유지 (옛 백업 복원 시 최근 추이 손실 방지)
+      const impDates = new Set(imported.history.map(h => h.date));
+      (data.history || []).forEach(h => { if (!impDates.has(h.date)) imported.history.push(h); });
+      imported.history.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
       ensureDividendSchema(imported);
       data = imported;
       save();
