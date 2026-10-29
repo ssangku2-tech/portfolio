@@ -529,7 +529,7 @@ body.ind-light .pos, #view-dividend .pos{color:#E5384E}
 
 <div class="header">
   <div class="header-top">
-    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.27</span>
+    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.28</span>
     <div class="header-btns">
       <button class="icon-btn" onclick="toggleMenu()" title="메뉴">⋮</button>
       <button class="refresh-btn" onclick="refreshAll()">
@@ -1497,7 +1497,7 @@ function renderHistoryChart() {
     return { date: h.date, m1, m2, assetSum, total };
   };
 
-  // 전체 이력 전부 표시 (최고·최저도 전체 기간 기준)
+  // 전체 이력(최고·최저 기록용) + 표시용 최근 30일
   const full = ensureBreakdown(data.history || []).map(adj);
   if (full.length < 2) {
     return `<div class="history-chart">
@@ -1505,11 +1505,11 @@ function renderHistoryChart() {
       <div class="chart-empty">데이터를 모으는 중입니다<br>매일 앱을 열면 추이가 쌓입니다</div>
     </div>`;
   }
-  const series = full;
+  const series = full.slice(-30);
   const n = series.length;
-  const visStart = 0;
+  const visStart = full.length - n;
 
-  // 전체 기간 최고·최저
+  // 전체 기간 최고·최저 (30일 지나도 유지)
   let maxFi = 0, minFi = 0;
   full.forEach((s, i) => { if (s.total > full[maxFi].total) maxFi = i; if (s.total < full[minFi].total) minFi = i; });
   const lastFi = full.length - 1;
@@ -1587,7 +1587,7 @@ function renderHistoryChart() {
 
   return `<div class="history-chart">
     <div class="chart-title">
-      <span>📊 변동 추이 (전체 ${n}일) <span class="area-unit">단위: 억원</span></span>
+      <span>📊 변동 추이 (${n}일) <span class="area-unit">단위: 억원</span></span>
       <span class="chart-chg ${cls(chg)}">${fmtEok(chg, true)} (${fmtPct(chgPct)})</span>
     </div>
     <div class="area-latest">${fmtEok(last)} <span class="area-latest-sub">현재 총자산</span></div>
@@ -1597,7 +1597,7 @@ function renderHistoryChart() {
     </div>
     <div class="area-xdates">${xdates}</div>
     <div class="area-legend">${legend}</div>
-    <div class="area-note">${series[0].date.replace(/-/g, '/')}부터 전체 기간 · 최고·최저는 전체 기록</div>
+    <div class="area-note">최고·최저는 전체 기간 기록 (←는 30일 이전)</div>
   </div>`;
 }
 
