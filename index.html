@@ -529,7 +529,7 @@ body.ind-light .pos, #view-dividend .pos{color:#E5384E}
 
 <div class="header">
   <div class="header-top">
-    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.28</span>
+    <span class="app-title" id="app-title">📊 내 주식 현황</span><span class="app-ver">v1.29</span>
     <div class="header-btns">
       <button class="icon-btn" onclick="toggleMenu()" title="메뉴">⋮</button>
       <button class="refresh-btn" onclick="refreshAll()">
@@ -2170,11 +2170,30 @@ async function fetchHist(symbol) {
 }
 
 // 5일 외국인·기관 순매수 추이 fetch
+// 1차: Worker ?trend= (네이버 PC 페이지 파싱) → 비어 있으면
+// 2차: 네이버 모바일 API(m.stock.naver.com/api/stock/{code}/trend)를 Worker ?url= 프록시로 직접 조회
 async function fetchTrend(code) {
   if (!MY_WORKER_URL) return null;
   try {
     const r = await fetch(`${MY_WORKER_URL}/?trend=${encodeURIComponent(code)}`, { signal: AbortSignal.timeout(12000) });
-    if (r.ok) { const d = await r.json(); return d.trends || []; }
+    if (r.ok) { const d = await r.json(); if (d.trends && d.trends.length) return d.trends; }
+  } catch(e) {}
+  try {
+    const krCode = String(code).replace(/\.(KS|KQ)$/i, '');
+    const api = `https://m.stock.naver.com/api/stock/${encodeURIComponent(krCode)}/trend?pageSize=10`;
+    const r = await fetch(`${MY_WORKER_URL}/?url=${encodeURIComponent(api)}`, { signal: AbortSignal.timeout(12000) });
+    if (r.ok) {
+      const arr = await r.json();
+      if (Array.isArray(arr)) {
+        const num = v => Number(String(v ?? '0').replace(/[,+\s]/g, '')) || 0;
+        // 모바일 API는 최신순 → 오래된 순으로 뒤집어 기존 형식({date, foreign, institution})에 맞춤
+        return arr.map(t => ({
+          date: t.bizdate,
+          foreign: num(t.foreignerPureBuyQuant),
+          institution: num(t.organPureBuyQuant)
+        })).reverse();
+      }
+    }
   } catch(e) {}
   return null;
 }
