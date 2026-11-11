@@ -1,5 +1,5 @@
 // 지에프아이(493330) 공시·뉴스·블로그 일일 요약 → 텔레그램 전송
-// GitHub Actions(.github/workflows/gfi-alert.yml)에서 매일 19:00 KST에 실행된다.
+// GitHub Actions(.github/workflows/gfi-alert.yml)에서 매일 09:00 KST에 실행된다.
 // 모든 데이터 출처는 API 키가 필요 없는 무료 공개 엔드포인트.
 //
 // 환경변수:
@@ -12,11 +12,11 @@ const STOCK_CODE = '493330';
 const UA = 'Mozilla/5.0 (compatible; portfolio-alert/1.0)';
 const KST = 9 * 3600 * 1000;
 
-// 수집 구간: 직전 19:00 KST 경계까지 (실행이 몇 분 늦어도 중복·누락 없이 고정된 구간)
+// 수집 구간: 직전 09:00 KST 경계까지 (실행이 몇 분 늦어도 중복·누락 없이 고정된 구간)
 function computeWindow() {
   const hours = Number(process.env.WINDOW_HOURS || 24);
   const nowKst = new Date(Date.now() + KST);
-  const end = new Date(Date.UTC(nowKst.getUTCFullYear(), nowKst.getUTCMonth(), nowKst.getUTCDate(), 19) - KST);
+  const end = new Date(Date.UTC(nowKst.getUTCFullYear(), nowKst.getUTCMonth(), nowKst.getUTCDate(), 9) - KST);
   if (end.getTime() > Date.now()) end.setTime(end.getTime() - 24 * 3600 * 1000);
   // 수동 실행(workflow_dispatch) 시엔 지금 시각까지 포함
   const endMs = process.env.MANUAL_RUN === 'true' ? Date.now() : end.getTime();

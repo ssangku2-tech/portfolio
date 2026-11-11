@@ -2,8 +2,8 @@ name: 지에프아이 일일 소식 알림
 
 on:
   schedule:
-    # 매일 19:00 KST (= 10:00 UTC). GitHub 스케줄은 수 분 늦게 시작될 수 있음.
-    - cron: '0 10 * * *'
+    # 매일 09:05 KST (= 00:05 UTC). 정각은 GitHub 예약 실행이 몰려 지연·누락이 잦아 5분 늦춤.
+    - cron: '5 0 * * *'
   workflow_dispatch: # Actions 탭에서 수동 실행(테스트)용
 
 permissions:
