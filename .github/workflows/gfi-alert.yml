@@ -1,0 +1,27 @@
+name: 지에프아이 일일 소식 알림
+
+on:
+  schedule:
+    # 매일 19:00 KST (= 10:00 UTC). GitHub 스케줄은 수 분 늦게 시작될 수 있음.
+    - cron: '0 10 * * *'
+  workflow_dispatch: # Actions 탭에서 수동 실행(테스트)용
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 공시·뉴스·블로그 수집 후 텔레그램 전송
+        run: node scripts/gfi-alert.mjs
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MANUAL_RUN: ${{ github.event_name == 'workflow_dispatch' }}
+          SEND_EMPTY: ${{ github.event_name == 'workflow_dispatch' }}
