@@ -1,0 +1,7 @@
+name = "gfi-cron"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+
+# 매일 00:00 UTC = 09:00 KST
+[triggers]
+crons = ["0 0 * * *"]

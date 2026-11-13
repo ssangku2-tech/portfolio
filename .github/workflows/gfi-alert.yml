@@ -9,7 +9,13 @@ on:
     - cron: '45 0 * * *'  # 09:45 KST
     - cron: '15 1 * * *'  # 10:15 KST
     - cron: '15 2 * * *'  # 11:15 KST
-  workflow_dispatch: # Actions 탭에서 수동 실행(테스트)용
+  # Actions 탭 수동 실행(테스트) + Cloudflare Worker(cloudflare/gfi-cron)의 09:00 정시 호출
+  workflow_dispatch:
+    inputs:
+      scheduled:
+        description: '정기 알림으로 처리 (Worker 호출용, 수동 테스트는 false)'
+        required: false
+        default: 'false'
 
 permissions:
   contents: write # 보낸 항목 기록(gfi-alert-state 브랜치) 저장용
@@ -45,8 +51,8 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           STATE_FILE: state.json
-          SCHEDULED: ${{ github.event_name == 'schedule' }}
-          SEND_EMPTY: ${{ github.event_name == 'workflow_dispatch' }}
+          SCHEDULED: ${{ github.event_name == 'schedule' || inputs.scheduled == 'true' }}
+          SEND_EMPTY: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled != 'true' }}
 
       - name: 보낸 항목 기록 저장
         run: |
