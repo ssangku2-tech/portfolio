@@ -2,12 +2,24 @@ name: 지에프아이 일일 소식 알림
 
 on:
   schedule:
-    # 매일 09:05 KST (= 00:05 UTC). 정각은 GitHub 예약 실행이 몰려 지연·누락이 잦아 5분 늦춤.
-    - cron: '5 0 * * *'
+    # 매일 아침 9시(KST = 00시 UTC)대. GitHub 예약 실행은 부하가 몰리면 몇 시간씩 늦거나 건너뛰는 일이 있어
+    # 여러 번 걸어 둔다. 그날 처음 실행된 것만 알림을 보내고 나머지는 바로 종료한다(스크립트에서 판단).
+    - cron: '5 0 * * *'   # 09:05 KST
+    - cron: '25 0 * * *'  # 09:25 KST
+    - cron: '45 0 * * *'  # 09:45 KST
+    - cron: '15 1 * * *'  # 10:15 KST
+    - cron: '15 2 * * *'  # 11:15 KST
   workflow_dispatch: # Actions 탭에서 수동 실행(테스트)용
 
 permissions:
-  contents: read
+  contents: write # 보낸 항목 기록(gfi-alert-state 브랜치) 저장용
+
+concurrency:
+  group: gfi-alert
+  cancel-in-progress: false
+
+env:
+  STATE_BRANCH: gfi-alert-state
 
 jobs:
   notify:
@@ -18,10 +30,38 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: 보낸 항목 기록 불러오기
+        run: |
+          if git fetch -q --depth=1 origin "$STATE_BRANCH" 2>/dev/null; then
+            git show "origin/$STATE_BRANCH:seen.json" > state.json || echo '{}' > state.json
+          else
+            echo '{}' > state.json
+          fi
+
       - name: 공시·뉴스·블로그 수집 후 텔레그램 전송
         run: node scripts/gfi-alert.mjs
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          MANUAL_RUN: ${{ github.event_name == 'workflow_dispatch' }}
+          STATE_FILE: state.json
+          SCHEDULED: ${{ github.event_name == 'schedule' }}
           SEND_EMPTY: ${{ github.event_name == 'workflow_dispatch' }}
+
+      - name: 보낸 항목 기록 저장
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git rev-parse -q --verify "origin/$STATE_BRANCH" >/dev/null; then
+            git worktree add -q st "origin/$STATE_BRANCH"
+            git -C st checkout -q -B "$STATE_BRANCH"
+          else
+            git worktree add -q --detach st
+            git -C st checkout -q --orphan "$STATE_BRANCH"
+            git -C st rm -rfq .
+          fi
+          cp state.json st/seen.json
+          git -C st add seen.json
+          if git -C st diff --cached --quiet; then echo '변경 없음'; exit 0; fi
+          git -C st commit -qm '알림 기록 갱신'
+          git -C st push -q origin "$STATE_BRANCH"
